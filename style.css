@@ -9,7 +9,7 @@
   width: 100%;
   height: 100%;
   position: relative;
-  margin: 0 auto;
+  margin: 10px 0 10px 0;
   width: 60%;
   max-width: 1080px;
   aspect-ratio: 3 / 2;
@@ -31,9 +31,19 @@
 #video-overlay video {
   background-color: #e8e8e8; 
   border-radius: 10px;
-  margin: 10px 0 10px 0;
   width: 100%;
   aspect-ratio: 3 / 2;
+}
+
+#tools {
+  margin: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+#tools div {
+  margin: 10px;
 }
 
 /*
@@ -62,7 +72,12 @@
 #previewer {
   max-height: 70vh;
   max-width: 50%;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+}
+
+#customize-tools {
+  display: flex;
+  align-items: flex-start;
 }
 
 .template-select {

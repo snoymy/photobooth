@@ -1,56 +1,170 @@
-  <div x-show="step === 'capture'" x-effect="(step === 'capture') && pc.init()" x-transition>
-    <div 
-      class="container-center" 
-      id="camera-container" 
-    >
-      <div id="video-overlay">
-        <video id="video" class="camera">Video stream not available.</video>
-      </div>
-      <div x-show="!pc.isStarted()">
-        <lable>Countdown in:</lable>
-        <select 
-          id="countdown-select" 
-          :value="pc.countdown" 
-          @change="pc.setCountdown($event.target.value)"
-        >
-          <option value="3">3s</option>
-          <option value="5">5s</option>
-          <option value="10">10s</option>
-        </select>
-      </div>
-      <p id="total-image" x-show="pc.isStarted()" x-text="`captured ${pc.totalPhoto} of ${pc.toCapture} photos`"></p>
-      <p 
-        id="countdown" 
-        x-text="pc.timer" 
-        x-show="pc.isStarted() && !(pc.totalPhoto === pc.toCapture)"
-      ></p>
-      <div style="padding: 10px 0 10px 0;">
-        <button 
-            id="next-button" 
-            style="display: none;" 
-            @click="pc.closeCamera(); step = 'template'" 
-            x-show="!pc.isStarted()"
-        >
-          Back
-        </button>
-        <button id="start-button" @click="pc.startCapture()" x-show="!pc.isStarted()">Start</button>
-        <button 
-            id="restart-button" 
-            style="display: none;" 
-            @click="pc.reset()" 
-            x-show="pc.isStarted() && (pc.totalPhoto === pc.toCapture)"
-        >
-          Retake
-        </button>
-        <button 
-            id="next-button" 
-            style="display: none;" 
-            @click="await pb.insert(pc.photosData); pc.closeCamera(); step = 'decor'" 
-            x-show="pc.isStarted() && (pc.totalPhoto === pc.toCapture)"
-        >
-          Next 
-        </button>
-      </div>
+<div 
+  x-transition
+  x-data="cameraState()"
+  x-init="openCamera()"
+>
+  <div 
+    class="container-center" 
+    id="camera-container" 
+  >
+    <div id="video-overlay" x-ref="overlay">
+      <video id="video" class="camera" x-ref="video">Video stream not available.</video>
+    </div>
+    <div x-show="!started">
+      <lable>Countdown in:</lable>
+      <select 
+        id="countdown-select" 
+        :value="countdown" 
+        @change="countdown = $event.target.value"
+      >
+        <option value="3">3s</option>
+        <option value="5">5s</option>
+        <option value="10">10s</option>
+      </select>
+    </div>
+    <p id="total-image" x-show="started" x-text="`captured ${totalPhoto} of ${toCapture} photos`"></p>
+    <p 
+      id="countdown" 
+      x-text="timer" 
+      x-show="started && !isFinished()"
+    ></p>
+    <div style="padding: 10px 0 10px 0;">
+      <button 
+        id="next-button" 
+        @click="closeCamera()" 
+        x-show="!started"
+        hx-target="main" 
+        hx-get="template-select.part.html"
+        hx-swap="innerHTML"
+      >
+        Back
+      </button>
+      <button id="start-button" @click="startCapture()" x-show="!started">Start</button>
+      <button 
+          id="restart-button" 
+          style="display: none;" 
+          @click="reset()" 
+          x-show="isFinished()"
+      >
+        Retake
+      </button>
+      <button 
+          id="next-button" 
+          style="display: none;" 
+          @click="closeCamera()" 
+          x-show="isFinished()"
+          hx-target="main" 
+          hx-get="customize-photo.part.html"
+          hx-swap="innerHTML"
+      >
+        Next 
+      </button>
     </div>
   </div>
+</div>
 
+<script>
+  function cameraState() {
+    return {
+      started: false,
+      countdown: 3,
+      timer: 3,
+      toCapture: Alpine.store('selectedTemplate').totalImage,
+      totalPhoto: 0,
+      photosData: [],
+      width: 1080,
+      height: 720,
+      streaming: false,
+
+      
+      openCamera() {
+        navigator.mediaDevices
+        .getUserMedia({ video: true, audio: false })
+        .then((stream) => {
+          this.$refs.video.srcObject = stream;
+          this.$refs.video.play();
+        })
+        .catch((err) => {
+          console.error(`An error occurred: ${err}`);
+        });
+
+        this.$refs.video.addEventListener(
+          "canplay",
+          () => {
+            if (!this.streaming) {
+              this.width = 1080;
+              this.height = this.$refs.video.videoHeight * (this.width / this.$refs.video.videoWidth);
+              console.log(this.width, this.height)
+              Alpine.store('imageInfo', {
+                width: this.width,
+                height: this.height,
+              });
+              this.streaming = true;
+            }
+          },
+          false
+        );
+      },
+
+      closeCamera() {
+        let tracks = this.$refs.video.srcObject?.getTracks();
+        if (tracks) {
+          tracks.forEach(track => track.stop());
+        }
+        this.$refs.video.srcObject = null;
+        this.streaming = false;
+      },
+
+      startCapture() {
+        this.started = true;
+        this.timer = this.countdown;
+        const interval = setInterval(async () => {
+          this.timer--;
+          if (this.timer === 0) {
+            this.flashEffect()
+            let data = await this.takePicture();
+            this.photosData.push(data);
+            this.totalPhoto++;
+            if (this.totalPhoto === this.toCapture) {
+              clearInterval(interval);
+              Alpine.store('images', this.photosData)
+            } else {
+              this.timer = this.countdown;
+            }
+          }
+        }, 1000);
+      },
+
+      flashEffect() {
+        const overlay = this.$refs.overlay;
+        overlay.style.transition = null;
+        overlay.style.opacity = 0.0;
+        setTimeout(() => {
+          overlay.style.transition = "opacity 0.2s";
+          overlay.style.opacity = 1.0;
+        }, 200);
+      },
+
+      async takePicture() {
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.width = this.width;
+        canvas.height = this.height;
+        context.drawImage(this.$refs.video, 0, 0, this.width, this.height);
+        return canvas.toDataURL("image/png");
+      },
+
+      reset() {
+        this.started = false;
+        this.totalPhoto = 0;
+        this.streaming = false;
+        this.canvas = null;
+        this.photosData = [];
+      },
+
+      isFinished() {
+        return this.started && (this.totalPhoto === this.toCapture);
+      },
+    };
+  }
+</script>

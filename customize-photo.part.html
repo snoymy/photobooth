@@ -1,13 +1,199 @@
-  <div 
-    class="container-center" 
-    x-show="step === 'decor'" 
-    x-init="pb.init()"
-    x-transition
-  >
-      <img id="previewer" :src="pb.preview"></img>
-      <div style="padding: 10px 0 10px 0;">
-        <button id="download-button" @click="pb.downloadImage()">Download</button>
-        <button @click="pb.setBackgroundColor('#ff0000')">BG</button>
+<div 
+  class="container-center" 
+  x-data="customizeState()"
+  x-init="await init()"
+  x-transition
+>
+  <div id="customize-tools" style="padding: 10px 0 10px 0;">
+    <img id="previewer" :src="preview"></img>
+    <div id="tools">
+      <div>
+        <label>Background Color:</label>
+        <input type="color" id="bg-color" x-ref="colorPicker" @change="setBackgroundColor($event.target.value)">
       </div>
-  </div>
 
+      <div>
+        <lable>Background Style:</lable>
+        <select 
+          id="countdown-select" 
+          value="/public/bg-style/doodle.png" 
+          @change="setBackgroundStyle($event.target.value)"
+        >
+          <option value="">None</option>
+        <template x-for="bgStyle in $store.bgStyleList">
+          <option :value="bgStyle.path" x-text="bgStyle.name"></option>
+        </template>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div style="padding: 10px 0 10px 0;">
+    <button id="download-button" @click="downloadImage()">Download</button>
+  </div>
+</div>
+
+<script>
+  function customizeState() {
+    const svg = Alpine.store('selectedTemplate').svg;
+    const urls = Alpine.store('images');
+
+    const getFormattedDate = () => {
+      const now = new Date();
+      
+      const pad = (num) => String(num).padStart(2, '0');
+
+      const year = now.getFullYear();
+      const month = pad(now.getMonth() + 1); // Months are 0-based
+      const day = pad(now.getDate());
+      const hours = pad(now.getHours());
+      const minutes = pad(now.getMinutes());
+      const seconds = pad(now.getSeconds());
+
+      return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+    }
+
+    const svgToImageUri = async (svg, width, height) => {
+      const serializer = new XMLSerializer();
+      const updatedSVG = serializer.serializeToString(svg);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const v = canvg.Canvg.fromString(ctx, updatedSVG)
+      v.resize(width, height)
+      v.start();
+      await v.ready();
+      const uri = canvas.toDataURL('image/png');
+
+      return uri
+    }
+
+    const inlineSvgToDataUrl = (svgString) => {
+      return `data:image/svg+xml,${encodeURIComponent(svgString)}`;
+    }
+
+    const inlineImageToDataUrl = (svgString) => {
+      return `data:image/png,${encodeURIComponent(svgString)}`;
+    }
+
+    fetchImageAsDataURL = async (url) => {
+      return new Promise((resolve, reject) => {
+        let img = new Image();
+        img.crossOrigin = "Anonymous"; // Request image with CORS
+        img.src = url;
+
+        img.onload = function () {
+          let canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          let ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL()); // Convert to base64
+        };
+
+        img.onerror = function () {
+          reject(new Error("Image loading failed"));
+        };
+      });
+    }
+
+    const getImageSize = (url) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        img.onerror = reject;
+        img.src = url;
+      });
+    }
+
+    return {
+      preview: null,
+      async updatePreview() {
+        this.preview = await inlineSvgToDataUrl(svg.outerHTML);
+      },
+      async init() {
+        const images = svg.getElementsByClassName("img");
+
+        return new Promise(async (resolve, reject) => {
+          for(let i = 0; i < images.length; i++) {
+            const url = urls[i]
+            const image = images[i]
+            if (url && image) {
+              try {
+                const width = Alpine.store('imageInfo').width;
+                const height = Alpine.store('imageInfo').height;
+                const currentWidth = image.getAttribute("width");
+                const currentHeight = image.getAttribute("height");
+                const newHeight = currentHeight;
+                const newWidth = currentHeight*(width/height);
+                image.setAttributeNS("http://www.w3.org/1999/xlink", "href", url);
+                image.setAttributeNS(null, "width", newWidth);
+
+                const ccw = currentWidth/2;
+                const cch = currentHeight/2;
+                const cw = newWidth/2;
+                const ch = newHeight/2;
+                const cx = image.getAttribute("x");
+                const cy = image.getAttribute("y");
+                image.setAttributeNS(null, "x", cx-(cw-ccw));
+                image.setAttributeNS(null, "y", cy-(ch-cch));
+              } catch (error) {
+                console.error("Failed to load image:", error);
+                reject()
+              }
+            }
+          }
+          const bgColor = svg.getElementById("bg-color");
+          if(bgColor) {
+            const color = bgColor.getAttribute("style").match(/fill:\s*([^;]+)/)[1];
+            this.$refs.colorPicker.value = color;
+          }
+          await this.updatePreview();
+          resolve()
+        })
+      },
+
+      async setBackgroundStyle(style) {
+        const bgStyle = svg.getElementById("bg-style");
+        if(bgStyle) {
+          if(!style) {
+            bgStyle.setAttributeNS(null, "style", `display:none`);
+            await this.updatePreview();
+            return;
+          }
+
+          const url = await fetchImageAsDataURL(style);
+          bgStyle.setAttributeNS(null, "style", "")
+
+          const imageSize = await getImageSize(url)
+
+          const width = imageSize.width;
+          const height = imageSize.height;
+          const currentWidth = bgStyle.getAttribute("width");
+          const currentHeight = bgStyle.getAttribute("height");
+          const newHeight = currentHeight;
+          const newWidth = currentHeight*(width/height);
+          bgStyle.setAttributeNS("http://www.w3.org/1999/xlink", "href", url);
+          bgStyle.setAttributeNS(null, "width", newWidth);
+          await this.updatePreview();
+        }
+      },
+
+      async setBackgroundColor(color) {
+        const bgColor = svg.getElementById("bg-color");
+        if(bgColor) {
+          bgColor.setAttributeNS(null, "style", `fill:${color};`)
+          await this.updatePreview();
+        }
+      },
+
+      async downloadImage() {
+        const width = svg.getAttribute("width");
+        const height = svg.getAttribute("height");
+        const uri = await svgToImageUri(svg, width, height);
+        const a = document.createElement('a');
+        a.href = uri;
+        a.download = `photobooth_${getFormattedDate()}.png`;
+        a.click();
+      },
+    };
+  }
+</script>
