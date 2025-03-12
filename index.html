@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhotoBooth</title>
+  <script src="./lib/umd.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+  <body x-data="{ step: 'template', pc: PhotoCapture(), pb: PhotoBuilder() }">
+
+  <div 
+    class="container-center"
+    x-show="step === 'template'" 
+    x-data="{ previews: pb.getTemplatesPreview(), selected: 0 }" 
+    x-transition
+  >
+    <div>
+      <template x-for="(preview, index) in previews">
+          <img 
+            class="template-select" 
+            :style="(selected === index) ? 'border: 5px solid green;border-radius: 10px;':'border: 5px solid white;border-radius: 0px;'" 
+            :src="preview" 
+            @click="selected = index"
+          ></img>
+      </template>
+    </div>
+    <button 
+        id="next-button" 
+        @click="await pb.setTemplate(selected); pc.setPhotoToCapture(pb.getTemplateInfo().totalImage); step = 'capture'" 
+    >
+      Next 
+    </button>
+  </div>
+
+  <div x-show="step === 'capture'" x-effect="(step === 'capture') && pc.init()" x-transition>
+    <div 
+      class="container-center" 
+      id="camera-container" 
+    >
+      <div id="video-overlay">
+        <video id="video" class="camera">Video stream not available.</video>
+      </div>
+      <div x-show="!pc.isStarted()">
+        <lable>Countdown in:</lable>
+        <select 
+          id="countdown-select" 
+          :value="pc.countdown" 
+          @change="pc.setCountdown($event.target.value)"
+        >
+          <option value="3">3s</option>
+          <option value="5">5s</option>
+          <option value="10">10s</option>
+        </select>
+      </div>
+      <p id="total-image" x-show="pc.isStarted()" x-text="`captured ${pc.totalPhoto} of ${pc.toCapture} photos`"></p>
+      <p 
+        id="countdown" 
+        x-text="pc.timer" 
+        x-show="pc.isStarted() && !(pc.totalPhoto === pc.toCapture)"
+      ></p>
+      <div style="padding: 10px 0 10px 0;">
+        <button 
+            id="next-button" 
+            style="display: none;" 
+            @click="pc.closeCamera(); step = 'template'" 
+            x-show="!pc.isStarted()"
+        >
+          Back
+        </button>
+        <button id="start-button" @click="pc.startCapture()" x-show="!pc.isStarted()">Start</button>
+        <button 
+            id="restart-button" 
+            style="display: none;" 
+            @click="pc.reset()" 
+            x-show="pc.isStarted() && (pc.totalPhoto === pc.toCapture)"
+        >
+          Retake
+        </button>
+        <button 
+            id="next-button" 
+            style="display: none;" 
+            @click="await pb.insert(pc.photosData); pc.closeCamera(); step = 'decor'" 
+            x-show="pc.isStarted() && (pc.totalPhoto === pc.toCapture)"
+        >
+          Next 
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div 
+    class="container-center" 
+    x-show="step === 'decor'" 
+    x-init="pb.init()"
+    x-transition
+  >
+      <img id="previewer" :src="pb.preview"></img>
+      <div style="padding: 10px 0 10px 0;">
+        <button id="download-button" @click="pb.downloadImage()">Download</button>
+        <button @click="pb.setBackgroundColor('#ff0000')">BG</button>
+      </div>
+  </div>
+
+  <script>
+    function PhotoCapture() {
+      return {
+        started: false, countdown: 3, timer: 0, toCapture: 1, totalPhoto: 0,
+        video: null, width: 1080, height: 720, streaming: false,
+        canvas: null, photosData: [],
+
+        init() {
+          this.timer = this.countdown;
+          this.started = false;
+          this.totalPhoto = 0;
+          this.video = null;
+          this.width = 1080;
+          this.height = 720;
+          this.streaming = false;
+          this.canvas = null;
+          this.photosData = [];
+          this.canvas = document.createElement("canvas");
+          this.openCamera();
+        },
+
+        openCamera() {
+          this.video = document.getElementById("video");
+          navigator.mediaDevices
+            .getUserMedia({ video: true, audio: false })
+            .then((stream) => {
+              this.video.srcObject = stream;
+              this.video.play();
+            })
+            .catch((err) => {
+              console.error(`An error occurred: ${err}`);
+            });
+
+          this.video.addEventListener(
+            "canplay",
+            (ev) => {
+              if (!this.streaming) {
+                this.height = this.video.videoHeight / (this.video.videoWidth / this.width);
+
+                if (isNaN(this.height)) {
+                  this.height = this.width / (3 / 2);
+                }
+                this.streaming = true;
+              }
+            },
+            false,
+          );
+        },
+
+        closeCamera() {
+          this.video.srcObject.getTracks().forEach((track) => {
+            if (track.readyState == 'live') {
+                track.stop();
+            }
+          });
+          this.video.srcObject = null;
+          this.streaming = false;
+        },
+
+        setCountdown(value) {
+          this.countdown = value;
+          this.timer = value;
+        },
+
+        setPhotoToCapture(amount) {
+          this.toCapture = amount;
+        },
+
+        startCapture() {
+          this.started = true;
+          this.timer = this.countdown;
+          const overlay = document.getElementById("video-overlay");
+          const interval = setInterval(async () => {
+            this.timer--;
+            if(this.timer === 0) {
+              overlay.style.transition = null; 
+              overlay.style.opacity = 0.0; 
+              setTimeout(() => {
+                overlay.style.transition = "opacity 0.2s"; 
+                overlay.style.opacity = 1.0;
+              }, 200)
+              let data = await this.takePicture();
+              this.photosData.push(data);
+              this.totalPhoto++;
+              if(this.totalPhoto === this.toCapture) {
+                clearInterval(interval);
+                console.log(this.photosData);
+              } else {
+                this.timer = this.countdown;
+              }
+            }
+          }, 1000);
+        },
+
+        reset() {
+          this.init();
+        },
+
+        isStarted() {
+          return this.started;
+        },
+
+        takePicture() {
+          return new Promise((resolve, reject) => {
+            const context = this.canvas.getContext("2d");
+            if (this.width && this.height) {
+              this.canvas.width = this.width;
+              this.canvas.height = this.height;
+              context.drawImage(this.video, 0, 0, this.width, this.height);
+
+              const data = this.canvas.toDataURL("image/png");
+              resolve(data)
+            } else {
+              //clearPhoto();
+            }
+          })
+        }
+      }
+    }
+
+    function PhotoBuilder() {
+      const templates = [
+        "public/template/bg.svg",
+        "public/template/bg2.svg",
+        "public/template/bg3.svg",
+        "public/template/bg4.svg",
+        "public/template/bg.svg",
+        "public/template/bg.svg",
+        "public/template/bg.svg",
+        "public/template/bg.svg",
+        "public/template/bg.svg",
+        "public/template/bg.svg",
+      ];
+
+      const svgToImageUri = async (svg, width, height) => {
+        const serializer = new XMLSerializer();
+        const updatedSVG = serializer.serializeToString(svg);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const v = canvg.Canvg.fromString(ctx, updatedSVG)
+        v.resize(width, height)
+        v.start();
+        await v.ready();
+        const uri = canvas.toDataURL('image/png');
+
+        return uri
+      }
+
+      const loadSVG = async (filename) => {
+        const res = await fetch(filename);
+        const svgText = await res.text();
+
+        const div = document.createElement('div');
+        div.innerHTML = svgText;
+        const svg = div.getElementsByTagName("svg")[0];
+
+        return svg;
+      }
+
+      const inlineSvgToDataUrl = (svgString) => {
+        return `data:image/svg+xml,${encodeURIComponent(svgString)}`;
+      }
+
+      const getFormattedDate = () => {
+        const now = new Date();
+        
+        const pad = (num) => String(num).padStart(2, '0');
+
+        const year = now.getFullYear();
+        const month = pad(now.getMonth() + 1); // Months are 0-based
+        const day = pad(now.getDate());
+        const hours = pad(now.getHours());
+        const minutes = pad(now.getMinutes());
+        const seconds = pad(now.getSeconds());
+
+        return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+      }
+
+      return {
+        svg: null, preview: "", 
+        async init() {
+          this.svg = await loadSVG(templates[0]);
+          this.preview = "";
+        },
+        async getTemplatesPreview() {
+          let urls = []
+          for(let i = 0; i < templates.length; i++) {
+            const template = templates[i];
+            const svg = await loadSVG(template)
+            const height = 720;
+            const width = svg.getAttribute("width")*(720/svg.getAttribute("height"));
+            //urls.push(await svgToImageUri(svg, width, height))
+            urls.push(await inlineSvgToDataUrl(svg.outerHTML))
+          }
+
+          return urls;
+        },
+        async setTemplate(index) {
+          this.svg = await loadSVG(templates[index]);
+        },
+        getTemplateInfo() {
+          let images = this.svg.getElementsByClassName("img");
+
+          return {totalImage: images.length}
+        },
+        async insert(urls) {
+          let images = this.svg.getElementsByClassName("img");
+
+          return new Promise(async (resolve, reject) => {
+            for(let i = 0; i < images.length; i++) {
+              const url = urls[i]
+              const image = images[i]
+              if (url && image) {
+                try {
+                  image.setAttributeNS("http://www.w3.org/1999/xlink", "href", url);
+                } catch (error) {
+                  console.error("Failed to load image:", error);
+                  reject()
+                }
+              }
+            }
+            await this.updatePreview();
+            resolve()
+          })
+        },
+        async updatePreview() {
+          const height = 1080;
+          const width = this.svg.getAttribute("width")*(1080/this.svg.getAttribute("height"));
+          //this.preview = await svgToImageUri(this.svg, width, height);
+          this.preview = await inlineSvgToDataUrl(this.svg.outerHTML);
+        },
+        async setBackgroundColor(color) {
+          const bgColor = this.svg.getElementById("bg-color");
+          if(bgColor) {
+            console.log(bgColor)
+            bgColor.setAttributeNS(null, "style", `fill:${color};`)
+          }
+          await this.updatePreview();
+          console.log(this.svg)
+        },
+        async downloadImage() {
+          const width = this.svg.getAttribute("width");
+          const height = this.svg.getAttribute("height");
+          const uri = await svgToImageUri(this.svg, width, height);
+          const a = document.createElement('a');
+          a.href = uri;
+          a.download = `photobooth_${getFormattedDate()}.png`;
+          a.click();
+        },
+      }
+    }
+  </script>
+
+</body>
+</html>
+

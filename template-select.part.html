@@ -1,0 +1,24 @@
+  <div 
+    class="container-center"
+    x-show="step === 'template'" 
+    x-data="{ previews: pb.getTemplatesPreview(), selected: 0 }" 
+    x-transition
+  >
+    <div>
+      <template x-for="(preview, index) in previews">
+          <img 
+            class="template-select" 
+            :style="(selected === index) ? 'border: 5px solid green;border-radius: 10px;':'border: 5px solid white;border-radius: 0px;'" 
+            :src="preview" 
+            @click="selected = index"
+          ></img>
+      </template>
+    </div>
+    <button 
+        id="next-button" 
+        @click="await pb.setTemplate(selected); pc.setPhotoToCapture(pb.getTemplateInfo().totalImage); step = 'capture'" 
+    >
+      Next 
+    </button>
+  </div>
+

@@ -1,0 +1,56 @@
+  <div x-show="step === 'capture'" x-effect="(step === 'capture') && pc.init()" x-transition>
+    <div 
+      class="container-center" 
+      id="camera-container" 
+    >
+      <div id="video-overlay">
+        <video id="video" class="camera">Video stream not available.</video>
+      </div>
+      <div x-show="!pc.isStarted()">
+        <lable>Countdown in:</lable>
+        <select 
+          id="countdown-select" 
+          :value="pc.countdown" 
+          @change="pc.setCountdown($event.target.value)"
+        >
+          <option value="3">3s</option>
+          <option value="5">5s</option>
+          <option value="10">10s</option>
+        </select>
+      </div>
+      <p id="total-image" x-show="pc.isStarted()" x-text="`captured ${pc.totalPhoto} of ${pc.toCapture} photos`"></p>
+      <p 
+        id="countdown" 
+        x-text="pc.timer" 
+        x-show="pc.isStarted() && !(pc.totalPhoto === pc.toCapture)"
+      ></p>
+      <div style="padding: 10px 0 10px 0;">
+        <button 
+            id="next-button" 
+            style="display: none;" 
+            @click="pc.closeCamera(); step = 'template'" 
+            x-show="!pc.isStarted()"
+        >
+          Back
+        </button>
+        <button id="start-button" @click="pc.startCapture()" x-show="!pc.isStarted()">Start</button>
+        <button 
+            id="restart-button" 
+            style="display: none;" 
+            @click="pc.reset()" 
+            x-show="pc.isStarted() && (pc.totalPhoto === pc.toCapture)"
+        >
+          Retake
+        </button>
+        <button 
+            id="next-button" 
+            style="display: none;" 
+            @click="await pb.insert(pc.photosData); pc.closeCamera(); step = 'decor'" 
+            x-show="pc.isStarted() && (pc.totalPhoto === pc.toCapture)"
+        >
+          Next 
+        </button>
+      </div>
+    </div>
+  </div>
+

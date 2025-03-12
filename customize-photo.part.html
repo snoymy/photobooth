@@ -1,0 +1,13 @@
+  <div 
+    class="container-center" 
+    x-show="step === 'decor'" 
+    x-init="pb.init()"
+    x-transition
+  >
+      <img id="previewer" :src="pb.preview"></img>
+      <div style="padding: 10px 0 10px 0;">
+        <button id="download-button" @click="pb.downloadImage()">Download</button>
+        <button @click="pb.setBackgroundColor('#ff0000')">BG</button>
+      </div>
+  </div>
+
