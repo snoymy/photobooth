@@ -7,6 +7,7 @@
     class="container-center" 
     id="camera-container" 
   >
+    <h1><i>Take Pictures!</i></h1>
     <div id="video-overlay" x-ref="overlay">
       <video id="video" class="camera" x-ref="video">Video stream not available.</video>
     </div>
@@ -34,9 +35,10 @@
         @click="closeCamera()" 
         x-show="!started"
         hx-target="main" 
-        hx-get="template-select.part.html"
+        hx-get="./component/template.html"
         hx-swap="innerHTML"
       >
+        <i class="arrow arrow-left"></i>
         Back
       </button>
       <button id="start-button" @click="startCapture()" x-show="!started">Start</button>
@@ -54,10 +56,11 @@
           @click="closeCamera()" 
           x-show="isFinished()"
           hx-target="main" 
-          hx-get="customize-photo.part.html"
+          hx-get="./component/customize.html"
           hx-swap="innerHTML"
       >
         Next 
+        <i class="arrow arrow-right"></i>
       </button>
     </div>
   </div>

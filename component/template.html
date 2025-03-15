@@ -3,11 +3,12 @@
   x-data="{ images: getPreviews($store.templateList), selected: 0 }" 
   x-transition
 >
+  <h1><i>Choose Your Favourite Template!</i></h1>
   <div>
     <template x-for="(image, index) in images">
       <img 
         class="template-select" 
-        :style="(selected === index) ? 'border: 5px solid green;border-radius: 10px;':'border: 5px solid white;border-radius: 0px;'" 
+        :style="(selected === index) ? 'border: 5px solid var(--blue);border-radius: 10px;':'border: 5px solid white;border-radius: 0px;'" 
         :src="image" 
         @click="selected = index"
       ></img>
@@ -17,9 +18,10 @@
     id="next-button" 
     @click="setTemplate($store.templateList[selected])" 
     hx-target="main"
-    hx-get="video-capture.part.html"
+    hx-get="./component/capture.html"
   >
     Next 
+    <i class="arrow arrow-right"></i>
   </button>
 </div>
 

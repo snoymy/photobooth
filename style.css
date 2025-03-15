@@ -1,3 +1,7 @@
+:root {
+  --blue: #0056fe;
+  --pink: #ff1fce;
+}
 .container-center {
   display: flex;
   flex-direction: column;
@@ -100,8 +104,32 @@ select {
 }
 
 button {
+  background-color: var(--pink);
+  color: white;
+  font-weight: bold;
   border: none;
   padding: 10px;
   border-radius: 10px;
   width: 100px;
+}
+
+button:hover {
+  cursor: pointer;
+}
+
+.arrow {
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  display: inline-block;
+  padding: 3px;
+}
+
+.arrow-right {
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+}
+
+.arrow-left {
+  transform: rotate(135deg);
+  -webkit-transform: rotate(135deg);
 }

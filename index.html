@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PhotoBooth</title>
   <script src="./lib/umd.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script defer src="./lib/alpine3.x.x.js"></script>
+  <script src="./lib/htmx2.0.4.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
   <body 
     hx-trigger="load"
-    hx-get="template-select.part.html"
+    hx-get="./component/template.html"
     hx-target="main"
     hx-swap="innerHTML"
   >
