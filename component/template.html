@@ -16,8 +16,7 @@
   </div>
   <button 
     id="next-button" 
-    @click="await setTemplate($store.templateList[selected])" 
-    hx-target="main"
+    @click="await setTemplate($store.templateList[selected]); next()" 
   >
     Next 
     <i class="arrow arrow-right"></i>
@@ -45,7 +44,9 @@
     const images = svg.getElementsByClassName("img");
     Alpine.store('selectedTemplate').svg = svg;
     Alpine.store('selectedTemplate').totalImage = images.length;
+  }
 
+  function next() {
     htmx.ajax('GET', './component/capture.html', { target: 'main' });
   }
 
