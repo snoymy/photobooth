@@ -16,7 +16,7 @@
   </div>
   <button 
     id="next-button" 
-    @click="setTemplate($store.templateList[selected])" 
+    @click="await setTemplate($store.templateList[selected])" 
     hx-target="main"
     hx-get="./component/capture.html"
   >
