@@ -1,24 +1,23 @@
 <div 
   class="container-center"
-  x-data="{ images: [], selected: 0 }" 
-  x-init="images = await getPreviews($store.templateList)"
+  x-data="{ images: getPreviews($store.templateList), selected: 0 }" 
   x-transition
 >
   <h1><i>Choose Your Favourite Template!</i></h1>
   <div>
-    <template x-for="(image, index) in images" :key="index">
+    <template x-for="(image, index) in images">
       <img 
         class="template-select" 
         :style="(selected === index) ? 'border: 5px solid var(--blue);border-radius: 10px;':'border: 5px solid white;border-radius: 0px;'" 
         :src="image" 
-        @click="selected = index"
-      />
+        @click="selected = index;"
+      ></img>
     </template>
   </div>
-  
   <button 
     id="next-button" 
-    @click="handleNextClick()"
+    @click="await setTemplate($store.templateList[selected])" 
+    hx-target="main"
   >
     Next 
     <i class="arrow arrow-right"></i>
@@ -32,7 +31,9 @@
 
     const div = document.createElement('div');
     div.innerHTML = svgText;
-    return div.getElementsByTagName("svg")[0];
+    const svg = div.getElementsByTagName("svg")[0];
+
+    return svg;
   }
 
   function inlineSvgToDataUrl(svgString) {
@@ -44,29 +45,22 @@
     const images = svg.getElementsByClassName("img");
     Alpine.store('selectedTemplate').svg = svg;
     Alpine.store('selectedTemplate').totalImage = images.length;
-  }
 
-  async function getPreviews(templates) {
-    let urls = [];
-    for (let template of templates) {
-      const svg = await loadSVG(template);
-      urls.push(await inlineSvgToDataUrl(svg.outerHTML));
-    }
-    return urls;
-  }
-
-  async function handleNextClick() {
-    const selectedTemplate = Alpine.store('templateList')[Alpine.store('selectedTemplate').selected || 0];
-
-    await setTemplate(selectedTemplate); // Wait for template to be set
-
-    // Manually trigger htmx GET request
     htmx.ajax('GET', './component/capture.html', { target: 'main' });
   }
 
-  // Set the first template by default
-  document.addEventListener('alpine:init', async () => {
-    await setTemplate(Alpine.store('templateList')[0]);
-  });
-</script>
+  async function getPreviews(templates) {
+    let urls = []
+    for(let i = 0; i < templates.length; i++) {
+      const template = templates[i];
+      const svg = await loadSVG(template)
+      const height = 720;
+      const width = svg.getAttribute("width")*(720/svg.getAttribute("height"));
+      urls.push(await inlineSvgToDataUrl(svg.outerHTML))
+    }
 
+    return urls;
+  }
+
+  setTemplate(Alpine.store('templateList')[0])
+</script>
