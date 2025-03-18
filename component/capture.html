@@ -7,7 +7,7 @@
     id="camera-container" 
   >
     <h1><i>Take Pictures!</i></h1>
-    <p>updated1</p>
+    <p>updated2</p>
     <p x-text="videoWidth"></p>
     <p x-text="videoHeight"></p>
     <div id="video-overlay" x-ref="overlay">
@@ -176,9 +176,8 @@
         if(this.width < this.height) {
           canvas.width = this.width;
           canvas.height = (this.width * this.width) / this.height;
-          let sx = this.width;
           let sy = (this.height/2) - (canvas.height/2)
-          context.drawImage(this.$refs.video, sx, sy, canvas.width, canvas.height);
+          context.drawImage(this.$refs.video, 0, sy, canvas.width, canvas.height);
         } else {
           canvas.width = this.width;
           canvas.height = this.height;
