@@ -111,12 +111,14 @@
 
             if (videoHeight > videoWidth) {
               // Swap width & height for proper horizontal display
-              this.width = videoHeight * (this.width / videoWidth);
-              this.height = VIDEO_WIDTH;
+              this.width = VIDEO_WIDTH;
+              this.height = videoHeight * (this.width / videoWidth);
               this.isRotated = true;
-              //this.$refs.video.style.transform = "rotate(90deg)";
+              this.$refs.video.style.transform = "rotate(90deg)";
             } else {
               // Keep default landscape mode
+              this.width = VIDEO_WIDTH;
+              this.height = videoHeight * (this.width / videoWidth);
               this.isRotated = false;
               this.$refs.video.style.transform = "none";
             }
