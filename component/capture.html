@@ -85,7 +85,7 @@
 
       init() {
         this.toCapture = Alpine.store('templateInfo').totalImages;
-        window.addEventListener("resize", () => {
+        screen.orientation.addEventListener("change", () => {
           console.log("rotate")
           this.openCamera();
         });
