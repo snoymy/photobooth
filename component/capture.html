@@ -109,10 +109,10 @@
             let videoWidth = this.$refs.video.videoWidth;
             let videoHeight = this.$refs.video.videoHeight;
 
-            if (videoHeight < videoWidth) {
+            if (videoHeight > videoWidth) {
               // Swap width & height for proper horizontal display
-              this.width = VIDEO_WIDTH;
-              this.height = videoHeight * (this.width / videoWidth);
+              this.width = videoHeight * (this.width / videoWidth);
+              this.height = VIDEO_WIDTH;
               this.isRotated = true;
               this.$refs.video.style.transform = "rotate(-90deg)";
             } else {
