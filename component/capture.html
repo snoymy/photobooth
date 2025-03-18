@@ -85,9 +85,10 @@
 
       init() {
         this.toCapture = Alpine.store('templateInfo').totalImages;
-        window.addEventListener("deviceorientation", (event) => {
+        window.addEventListener("resize", () => {
+          console.log("rotate")
           this.openCamera();
-        }, true); 
+        });
 
         this.openCamera();
       },
