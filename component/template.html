@@ -1,22 +1,23 @@
 <div 
   class="container-center"
-  x-data="{ images: getPreviews($store.templateList), selected: 0 }" 
+  x-data="templateState" 
   x-transition
 >
   <h1><i>Choose Your Favourite Template!</i></h1>
   <div>
-    <template x-for="(image, index) in images">
+    <template x-for="(url, index) in previewUrlList">
       <img 
         class="template-select" 
-        :style="(selected === index) ? 'border: 5px solid var(--blue);border-radius: 10px;':'border: 5px solid white;border-radius: 0px;'" 
-        :src="image" 
-        @click="selected = index;"
+        :style="(selectedIndex === index) ? 'border: 5px solid var(--blue);border-radius: 10px;':'border: 5px solid white;border-radius: 0px;'" 
+        :src="url" 
+        @click="selectTemplate(index)"
       ></img>
     </template>
   </div>
   <button 
     id="next-button" 
-    @click="await setTemplate($store.templateList[selected]); next()" 
+    hx-target="main"
+    hx-get="./component/capture.html"
   >
     Next 
     <i class="arrow arrow-right"></i>
@@ -24,44 +25,64 @@
 </div>
 
 <script>
-  async function loadSVG(filename) {
-    const res = await fetch(filename);
-    const svgText = await res.text();
+  function templateState() {
+    async function loadSVG(filename) {
+      const res = await fetch(filename);
+      const svgText = await res.text();
 
-    const div = document.createElement('div');
-    div.innerHTML = svgText;
-    const svg = div.getElementsByTagName("svg")[0];
+      const div = document.createElement('div');
+      div.innerHTML = svgText;
+      const svg = div.getElementsByTagName("svg")[0];
 
-    return svg;
-  }
-
-  function inlineSvgToDataUrl(svgString) {
-    return `data:image/svg+xml,${encodeURIComponent(svgString)}`;
-  }
-
-  async function setTemplate(template) {
-    const svg = await loadSVG(template);
-    const images = svg.getElementsByClassName("img");
-    Alpine.store('selectedTemplate').svg = svg;
-    Alpine.store('selectedTemplate').totalImage = images.length;
-  }
-
-  function next() {
-    htmx.ajax('GET', './component/capture.html', { target: 'main' });
-  }
-
-  async function getPreviews(templates) {
-    let urls = []
-    for(let i = 0; i < templates.length; i++) {
-      const template = templates[i];
-      const svg = await loadSVG(template)
-      const height = 720;
-      const width = svg.getAttribute("width")*(720/svg.getAttribute("height"));
-      urls.push(await inlineSvgToDataUrl(svg.outerHTML))
+      return svg;
     }
 
-    return urls;
-  }
+    function inlineSvgToDataUrl(svgString) {
+      return `data:image/svg+xml,${encodeURIComponent(svgString)}`;
+    }
 
-  setTemplate(Alpine.store('templateList')[0])
+    return {
+      previewUrlList: [],
+      templateInfoList: [],
+      selectedIndex: 0,
+      
+
+      async init() {
+        let tempTemplateInfoList = [];
+        let tempPreviewUrlList = [];
+        for(const template of Alpine.store("templatePathList")) {
+          const templateInfo = await this.getTemplateInfo(template);
+          const previewUrl = await this.getPreviewUrl(templateInfo.svg);
+
+          tempTemplateInfoList.push(templateInfo);
+          tempPreviewUrlList.push(previewUrl);
+        }
+        this.selectedIndex = 0;
+        this.templateInfoList = tempTemplateInfoList;
+        this.previewUrlList = tempPreviewUrlList;
+        Alpine.store("templateInfo", this.templateInfoList[this.selectedIndex])
+      },
+
+      async getTemplateInfo(template) {
+        const svg = await loadSVG(template);
+        const images = svg.getElementsByClassName("img");
+        
+        return {
+          svg: svg,
+          totalImages: images.length,
+        };
+      },
+
+      async getPreviewUrl(svg) {
+          const height = 720;
+          const width = svg.getAttribute("width")*(720/svg.getAttribute("height"));
+          return await inlineSvgToDataUrl(svg.outerHTML);
+      },
+
+      selectTemplate(index) {
+        this.selectedIndex = index;
+        Alpine.store("templateInfo", this.templateInfoList[index])
+      },
+    }
+  }
 </script>

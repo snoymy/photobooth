@@ -18,11 +18,7 @@
   <main x-data></main>
   <script>
     document.addEventListener('alpine:init', () => {
-      Alpine.store('selectedTemplate', {
-          svg: null, 
-          totalImage: 0, 
-      });
-      Alpine.store('templateList', [
+      Alpine.store('templatePathList', [
         "public/template/single-frame.svg",
         "public/template/square3x2.svg",
       ]);
@@ -40,8 +36,12 @@
           path: "public/bg-style/flower.png",
         },
       ]);
+      Alpine.store('templateInfo', {
+          svg: null, 
+          totalImage: 0, 
+      });
       Alpine.store('images', []);
-      Alpine.store('imageInfo', {
+      Alpine.store('capturedInfo', {
         width: 1080,
         height: 720,
       });

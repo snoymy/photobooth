@@ -35,7 +35,7 @@
 
 <script>
   function customizeState() {
-    const svg = Alpine.store('selectedTemplate').svg;
+    const svg = Alpine.store('templateInfo').svg;
     const urls = Alpine.store('images');
 
     const getFormattedDate = () => {
@@ -110,6 +110,7 @@
       async updatePreview() {
         this.preview = await inlineSvgToDataUrl(svg.outerHTML);
       },
+
       async init() {
         const images = svg.getElementsByClassName("img");
 
@@ -119,8 +120,8 @@
             const image = images[i]
             if (url && image) {
               try {
-                const width = Alpine.store('imageInfo').width;
-                const height = Alpine.store('imageInfo').height;
+                const width = Alpine.store('capturedInfo').width;
+                const height = Alpine.store('capturedInfo').height;
                 const currentWidth = image.getAttribute("width");
                 const currentHeight = image.getAttribute("height");
                 const newHeight = currentHeight;

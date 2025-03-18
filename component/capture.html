@@ -1,7 +1,6 @@
 <div 
   x-transition
   x-data="cameraState()"
-  x-init="openCamera()"
 >
   <div 
     class="container-center" 
@@ -68,17 +67,30 @@
 
 <script>
   function cameraState() {
+    const VIDEO_WIDTH = 1080;
+    const VIDEO_HEIGHT = 720;
+
     return {
       started: false,
       countdown: 3,
       timer: 3,
-      toCapture: Alpine.store('selectedTemplate').totalImage,
+      toCapture: 0,
       totalPhoto: 0,
       photosData: [],
-      width: 1080,
-      height: 720,
+      width: VIDEO_WIDTH,
+      height: VIDEO_HEIGHT,
       streaming: false,
+      isRotated: false,
 
+
+      init() {
+        this.toCapture = Alpine.store('templateInfo').totalImages;
+        window.addEventListener("deviceorientation", (event) => {
+          this.openCamera();
+        }, true); 
+
+        this.openCamera();
+      },
       
       openCamera() {
         navigator.mediaDevices
@@ -91,22 +103,31 @@
           console.error(`An error occurred: ${err}`);
         });
 
-        this.$refs.video.addEventListener(
-          "canplay",
-          () => {
-            if (!this.streaming) {
-              this.width = 1080;
-              this.height = this.$refs.video.videoHeight * (this.width / this.$refs.video.videoWidth);
-              console.log(this.width, this.height)
-              Alpine.store('imageInfo', {
-                width: this.width,
-                height: this.height,
-              });
-              this.streaming = true;
+        this.$refs.video.addEventListener("canplay", () => {
+          if (!this.streaming) {
+            let videoWidth = this.$refs.video.videoWidth;
+            let videoHeight = this.$refs.video.videoHeight;
+
+            if (videoHeight > videoWidth) {
+              // Swap width & height for proper horizontal display
+              this.width = videoHeight * (this.width / videoWidth);
+              this.height = VIDEO_WIDTH;
+              this.isRotated = true;
+              this.$refs.video.style.transform = "rotate(90deg)";
+            } else {
+              // Keep default landscape mode
+              this.width = VIDEO_WIDTH;
+              this.height = videoHeight * (this.width / videoWidth);
+              this.isRotated = false;
+              this.$refs.video.style.transform = "none";
             }
-          },
-          false
-        );
+            Alpine.store('capturedInfo', {
+              width: this.width,
+              height: this.height,
+            });
+            this.streaming = true;
+          }
+        }, false);
       },
 
       closeCamera() {
@@ -151,9 +172,17 @@
       async takePicture() {
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
-        canvas.width = this.width;
-        canvas.height = this.height;
-        context.drawImage(this.$refs.video, 0, 0, this.width, this.height);
+        if (this.isRotated) {
+          canvas.width = this.height; // Swap width & height
+          canvas.height = this.width;
+          context.translate(canvas.width / 2, canvas.height / 2);
+          context.rotate(Math.PI / 2); // Rotate 90 degrees
+          context.drawImage(this.$refs.video, -canvas.height / 2, -canvas.width / 2, this.height, this.width);
+        } else {
+          canvas.width = this.width;
+          canvas.height = this.height;
+          context.drawImage(this.$refs.video, 0, 0, this.width, this.height);
+        }
         return canvas.toDataURL("image/png");
       },
 
