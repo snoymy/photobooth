@@ -7,7 +7,7 @@
     id="camera-container" 
   >
     <h1><i>Take Pictures!</i></h1>
-    <p>updated3</p>
+    <p>updated4</p>
     <p x-text="videoWidth"></p>
     <p x-text="videoHeight"></p>
     <div id="video-overlay" x-ref="overlay">
@@ -173,29 +173,19 @@
       async takePicture() {
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
-
-        if (this.width < this.height) {
-          // Convert portrait to landscape while maintaining aspect ratio
+        if(this.width < this.height) {
           canvas.width = this.width;
-          canvas.height = Math.floor((this.width * this.width) / this.height); // Maintain aspect ratio
-
-          let sy = (this.height - canvas.height) / 2; // Crop vertically from center
-          context.drawImage(
-            this.$refs.video,
-            0, sy, this.width, canvas.height, // Crop source (video)
-            0, 0, this.width, canvas.height  // Draw to canvas
-          );
+          canvas.height = (this.width * this.width) / this.height;
+          let sy = (this.height/2) - (canvas.height/2)
+          context.fillStyle = "blue";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          //console.log(canvas.width, canvas.height, this.width, this.height)
+          context.drawImage(this.$refs.video, 0, sy, canvas.width, canvas.height);
         } else {
-          // Already landscape, keep original aspect ratio
           canvas.width = this.width;
           canvas.height = this.height;
-          context.drawImage(
-            this.$refs.video,
-            0, 0, this.width, this.height, // Source (video)
-            0, 0, this.width, this.height  // Draw to canvas
-          );
+          context.drawImage(this.$refs.video, 0, 0, this.width, this.height);
         }
-
         return canvas.toDataURL("image/png");
       },
 
