@@ -181,6 +181,10 @@
           context.fillRect(0, 0, canvas.width, canvas.height);
           //console.log(canvas.width, canvas.height, this.width, this.height)
           context.drawImage(this.$refs.video, 0, sy, canvas.width, canvas.height);
+          Alpine.store('capturedInfo', {
+            width: canvas.width,
+            height: canvas.height,
+          });
         } else {
           canvas.width = this.width;
           canvas.height = this.height;
