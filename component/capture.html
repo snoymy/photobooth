@@ -177,7 +177,7 @@
           canvas.width = this.width;
           canvas.height = (this.width * this.width) / this.height;
           let sy = (this.height/2) - (canvas.height/2)
-          context.drawImage(this.$refs.video, 0, sy, canvas.width, canvas.height);
+          context.drawImage(this.$refs.video, 0, sy, this.width, canvas.height);
         } else {
           canvas.width = this.width;
           canvas.height = this.height;
