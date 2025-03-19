@@ -180,7 +180,7 @@
           context.fillStyle = "blue";
           context.fillRect(0, 0, canvas.width, canvas.height);
           //console.log(canvas.width, canvas.height, this.width, this.height)
-          context.drawImage(this.$refs.video, 0, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+          context.drawImage(this.$refs.video, 0, 0, canvas.width, canvas.height, 10, 10, canvas.width, canvas.height);
           Alpine.store('capturedInfo', {
             width: canvas.width,
             height: canvas.height,
