@@ -25,6 +25,7 @@
         <option value="10">10s</option>
       </select>
     </div>
+    <img :src="src" />
     <p id="total-image" x-show="started" x-text="`captured ${totalPhoto} of ${toCapture} photos`"></p>
     <p 
       id="countdown" 
@@ -86,6 +87,7 @@
       isRotated: false,
       videoWidth: 0,
       videoHeight: 0,
+      src: null,
 
 
 
@@ -117,11 +119,18 @@
 
             this.videoWidth = videoWidth;
             this.videoHeight = videoHeight;
-
-            this.width = VIDEO_WIDTH;
-            this.height = videoHeight * (this.width / videoWidth);
-            this.isRotated = false;
-            this.$refs.video.style.transform = "none";
+            
+            if(videoHeight > videoWidth) {
+              this.width = VIDEO_WIDTH;
+              this.height = VIDEO_HEIGHT;
+              this.isRotated = false;
+              this.$refs.video.style.transform = "none";
+            } else {
+              this.width = VIDEO_WIDTH;
+              this.height = videoHeight * (this.width / videoWidth);
+              this.isRotated = false;
+              this.$refs.video.style.transform = "none";
+            }
             Alpine.store('capturedInfo', {
               width: this.width,
               height: this.height,
@@ -173,23 +182,43 @@
       async takePicture() {
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
-        if(this.width < this.height) {
-          canvas.width = this.width;
-          canvas.height = (this.width * this.width) / this.height;
-          let sy = (this.height/2) - (canvas.height/2)
-          context.fillStyle = "blue";
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          //console.log(canvas.width, canvas.height, this.width, this.height)
-          context.drawImage(this.$refs.video, 0, 0, canvas.width, canvas.height, 10, 10, canvas.width, canvas.height);
-          Alpine.store('capturedInfo', {
-            width: canvas.width,
-            height: canvas.height,
-          });
+
+        const video = this.$refs.video;
+        const videoWidth = video.videoWidth;
+        const videoHeight = video.videoHeight;
+
+        // Set the final canvas size (e.g., 500x500)
+        canvas.width = this.width;
+        canvas.height = this.height;
+
+        // Calculate the best way to fill the entire canvas without stretching
+        const videoAspectRatio = videoWidth / videoHeight;
+        const canvasAspectRatio = canvas.width / canvas.height;
+
+        let sx, sy, sWidth, sHeight;
+
+        if (videoAspectRatio > canvasAspectRatio) {
+          // Video is wider than canvas -> crop width
+          sHeight = videoHeight;
+          sWidth = sHeight * canvasAspectRatio; // Maintain canvas aspect ratio
+          sx = (videoWidth - sWidth) / 2; // Center crop
+          sy = 0;
         } else {
-          canvas.width = this.width;
-          canvas.height = this.height;
-          context.drawImage(this.$refs.video, 0, 0, this.width, this.height);
+          // Video is taller than canvas -> crop height
+          sWidth = videoWidth;
+          sHeight = sWidth / canvasAspectRatio; // Maintain canvas aspect ratio
+          sx = 0;
+          sy = (videoHeight - sHeight) / 2; // Center crop
         }
+
+        // Fill background first (optional)
+        context.fillStyle = "blue";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw and crop video frame onto canvas
+        context.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+
+        this.src = canvas.toDataURL("image/png");
         return canvas.toDataURL("image/png");
       },
 
