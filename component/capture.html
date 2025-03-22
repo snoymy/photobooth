@@ -10,20 +10,42 @@
     <div x-show="!isFinished()" id="video-overlay" x-ref="overlay">
       <video id="video" class="camera" x-ref="video">Video stream not available.</video>
     </div>
-    <div x-show="photosData.length > 0 && isFinished()" x-data="{ photoIndex: 0 }">
-      <div style="display: flex; flex-direction: column;">
-        <img class="captured-photoIndex" :src="photosData[photoIndex] && photosData[photoIndex].image"/>
-        <div>
-          <button x-show="photosData.length > 1 && photoIndex > 0" @click="photoIndex--">prev</button>
-          <input 
-            type="checkbox" 
-            @change="toggleSelectPhoto(photoIndex, $event.target.checked)"
-            :checked="photosData[photoIndex] && photosData[photoIndex].selected" 
-            :disabled="!canToggle(photoIndex)"
-          />
-          <button x-show="photosData.length > 1 && photoIndex < photosData.length - 1" @click="photoIndex++">next</button>
-        </div>
+    <div x-show="photosData.length > 0 && isFinished()" x-data="{ photoIndex: 0 }" class="image-selector">
+      <!-- Previous Button -->
+      <button 
+        class="image-selector-button"
+        :disabled="!(photosData.length > 1 && photoIndex > 0)" 
+        @click="photoIndex--"
+      >
+        <i class="arrow arrow-left"></i>
+      </button>
+
+      <!-- Image Wrapper -->
+      <div class="image-container">
+        <img 
+          class="captured-image" 
+          :src="photosData[photoIndex] && photosData[photoIndex].image"
+        />
+        
+        <!-- Checkbox Overlay -->
+        <input 
+          x-ref="imageCheckbox"
+          type="checkbox" 
+          @change="toggleSelectPhoto(photoIndex, $event.target.checked)"
+          :checked="photosData[photoIndex] && photosData[photoIndex].selected" 
+          :disabled="!canToggle(photoIndex)"
+          class="image-checkbox"
+        />
       </div>
+
+      <!-- Next Button -->
+      <button 
+        class="image-selector-button"
+        :disabled="!(photosData.length > 1 && photoIndex < photosData.length - 1)" 
+        @click="photoIndex++"
+      >
+        <i class="arrow arrow-right"></i>
+      </button>
     </div>
     <div x-show="!started">
       <lable>Countdown in:</lable>
@@ -247,7 +269,15 @@
           sy = (videoHeight - sHeight) / 2; // Center crop
         }
 
-        context.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+        // Mirror the image horizontally
+        context.save(); // Save the current state
+        context.translate(canvas.width, 0); // Move the origin to the right
+        context.scale(-1, 1); // Flip horizontally
+
+        // Draw the image with the mirrored transformation
+        context.drawImage(this.$refs.video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+
+        context.restore(); // Restore to the previous state to avoid affecting other drawings
 
         return canvas.toDataURL("image/png");
       },
