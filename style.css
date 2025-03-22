@@ -9,6 +9,12 @@
   align-items: center;
 }
 
+.captured-preview {
+  width: 60%;
+  margin: 10px 0 10px 0;
+  max-width: 1080px;
+}
+
 #video-overlay {
   width: 100%;
   height: 100%;
@@ -116,6 +122,10 @@ button {
 
 button:hover {
   cursor: pointer;
+}
+
+button:disabled {
+  background-color: #e8e8e8;
 }
 
 .arrow {

@@ -7,11 +7,23 @@
     id="camera-container" 
   >
     <h1><i>Take Pictures!</i></h1>
-    <p>updated4</p>
-    <p x-text="videoWidth"></p>
-    <p x-text="videoHeight"></p>
-    <div id="video-overlay" x-ref="overlay">
+    <div x-show="!isFinished()" id="video-overlay" x-ref="overlay">
       <video id="video" class="camera" x-ref="video">Video stream not available.</video>
+    </div>
+    <div x-show="photosData.length > 0 && isFinished()" x-data="{ photoIndex: 0 }">
+      <div style="display: flex; flex-direction: column;">
+        <img class="captured-photoIndex" :src="photosData[photoIndex] && photosData[photoIndex].image"/>
+        <div>
+          <button x-show="photosData.length > 1 && photoIndex > 0" @click="photoIndex--">prev</button>
+          <input 
+            type="checkbox" 
+            @change="toggleSelectPhoto(photoIndex, $event.target.checked)"
+            :checked="photosData[photoIndex] && photosData[photoIndex].selected" 
+            :disabled="!canToggle(photoIndex)"
+          />
+          <button x-show="photosData.length > 1 && photoIndex < photosData.length - 1" @click="photoIndex++">next</button>
+        </div>
+      </div>
     </div>
     <div x-show="!started">
       <lable>Countdown in:</lable>
@@ -25,8 +37,16 @@
         <option value="10">10s</option>
       </select>
     </div>
-    <img :src="src" />
-    <p id="total-image" x-show="started" x-text="`captured ${totalPhoto} of ${toCapture} photos`"></p>
+    <p 
+      id="total-image" 
+      x-show="started && !isFinished()" 
+      x-text="`captured ${totalPhoto} of ${toCapture} photos`"
+    ></p>
+    <p 
+      id="total-image" 
+      x-show="isFinished()" 
+      x-text="`selected ${selectedCount} of ${baseAmount} photos`"
+    ></p>
     <p 
       id="countdown" 
       x-text="timer" 
@@ -54,16 +74,32 @@
         Retake
       </button>
       <button 
-          id="next-button" 
-          style="display: none;" 
-          @click="closeCamera()" 
-          x-show="isFinished()"
-          hx-target="main" 
-          hx-get="./component/customize.html"
-          hx-swap="innerHTML"
+        id="next-button" 
+        style="display: none;" 
+        @click="closeCamera(); onNext()" 
+        x-show="isFinished()"
+        :disabled="selectedCount !== baseAmount" 
       >
         Next 
         <i class="arrow arrow-right"></i>
+      </button>
+    </div>
+    <p x-show="isFinished()">Or take more and let choose!</p>
+    <div x-show="isFinished()">
+      <select 
+        x-ref="moreAmount"
+        id="countdown-select" 
+        value="3" 
+      >
+        <option value="3">3 pictures</option>
+        <option value="5">5 pictures</option>
+        <option value="10">10 pictures</option>
+      </select>
+      <button 
+          id="restart-button" 
+          @click="takeMore($refs.moreAmount.value)" 
+      >
+        Take more!
       </button>
     </div>
   </div>
@@ -78,6 +114,7 @@
       started: false,
       countdown: 3,
       timer: 3,
+      baseAmount: 0,
       toCapture: 0,
       totalPhoto: 0,
       photosData: [],
@@ -87,12 +124,12 @@
       isRotated: false,
       videoWidth: 0,
       videoHeight: 0,
-      src: null,
-
+      selectedCount: 0,
 
 
       init() {
-        this.toCapture = Alpine.store('templateInfo').totalImages;
+        this.baseAmount = Alpine.store('templateInfo').totalImages;
+        this.toCapture = this.baseAmount;
         //screen.orientation.addEventListener("change", () => {
         //  console.log("rotate")
         //  this.openCamera();
@@ -114,12 +151,9 @@
 
         this.$refs.video.addEventListener("canplay", () => {
           if (!this.streaming) {
-            let videoWidth = this.$refs.video.videoWidth;
-            let videoHeight = this.$refs.video.videoHeight;
+            const videoWidth = this.$refs.video.videoWidth;
+            const videoHeight = this.$refs.video.videoHeight;
 
-            this.videoWidth = videoWidth;
-            this.videoHeight = videoHeight;
-            
             if(videoHeight > videoWidth) {
               this.width = VIDEO_WIDTH;
               this.height = VIDEO_HEIGHT;
@@ -157,11 +191,14 @@
           if (this.timer === 0) {
             this.flashEffect()
             let data = await this.takePicture();
-            this.photosData.push(data);
             this.totalPhoto++;
+            this.photosData.push({
+              image: data,
+              selected: this.totalPhoto <= this.baseAmount ? true : false,
+            });
+            this.selectedCount += this.totalPhoto <= this.baseAmount ? 1 : 0;
             if (this.totalPhoto === this.toCapture) {
               clearInterval(interval);
-              Alpine.store('images', this.photosData)
             } else {
               this.timer = this.countdown;
             }
@@ -183,9 +220,8 @@
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
 
-        const video = this.$refs.video;
-        const videoWidth = video.videoWidth;
-        const videoHeight = video.videoHeight;
+        const videoWidth = this.$refs.video.videoWidth;
+        const videoHeight = this.$refs.video.videoHeight;
 
         // Set the final canvas size (e.g., 500x500)
         canvas.width = this.width;
@@ -211,14 +247,8 @@
           sy = (videoHeight - sHeight) / 2; // Center crop
         }
 
-        // Fill background first (optional)
-        context.fillStyle = "blue";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Draw and crop video frame onto canvas
         context.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
 
-        this.src = canvas.toDataURL("image/png");
         return canvas.toDataURL("image/png");
       },
 
@@ -228,10 +258,39 @@
         this.streaming = false;
         this.canvas = null;
         this.photosData = [];
+        this.toCapture = this.baseAmount;
+      },
+
+      takeMore(amount) {
+        this.toCapture += parseInt(amount);
+        this.startCapture();
       },
 
       isFinished() {
         return this.started && (this.totalPhoto === this.toCapture);
+      },
+
+      onNext() {
+        let selectedPhotos = [];
+        for(photo of this.photosData) {
+          if(photo.selected) {
+            selectedPhotos.push(photo.image);
+          }
+        }
+        Alpine.store('images', selectedPhotos);
+        htmx.ajax('GET', './component/customize.html', {target:'main', swap:'innerHTML'})
+      },
+
+      toggleSelectPhoto(index, select) {
+        this.photosData[index].selected = select;
+        this.selectedCount += select ? 1 : -1;
+      },
+
+      canToggle(index) {
+        if(this.photosData[index] && this.photosData[index].selected && this.photosData.length > this.baseAmount) return true;
+        if(this.photosData.length <= this.baseAmount || this.selectedCount === this.baseAmount) return false;
+
+        return true;
       },
     };
   }
