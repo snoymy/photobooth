@@ -3,14 +3,73 @@
   x-data="cameraState()"
 >
   <div 
+    x-show="!isFinished()"
     class="container-center" 
     id="camera-container" 
   >
     <h1><i>Take Pictures!</i></h1>
-    <div x-show="!isFinished()" id="video-overlay" x-ref="overlay">
+    <div id="video-overlay" x-ref="overlay">
+      <p 
+        x-show="started" 
+        id="countdown" 
+        x-text="timer" 
+      ></p>
       <video id="video" class="camera" x-ref="video">Video stream not available.</video>
     </div>
-    <div x-show="photosData.length > 0 && isFinished()" x-data="{ photoIndex: 0 }" class="image-selector">
+    <div x-show="!started" style="margin-bottom: 10px;">
+      <lable>Selfie:</lable>
+      <input 
+        type="checkbox" 
+        @change="mirrorCamera($event.target.checked)"
+        checked
+      />
+    </div>
+    <div x-show="!started">
+      <lable>Countdown in:</lable>
+      <select 
+        id="countdown-select" 
+        :value="countdown" 
+        @change="countdown = $event.target.value"
+      >
+        <option value="3">3s</option>
+        <option value="5">5s</option>
+        <option value="10">10s</option>
+      </select>
+    </div>
+    <p 
+      x-show="started" 
+      id="total-image" 
+      x-text="`captured ${totalPhoto} of ${toCapture} photos`"
+    ></p>
+    <div style="padding: 10px 0 10px 0;">
+      <button 
+        id="next-button" 
+        @click="closeCamera()" 
+        x-show="!started"
+        hx-target="main" 
+        hx-get="./component/template.html"
+        hx-swap="innerHTML"
+      >
+        <i class="arrow arrow-left"></i>
+        Back
+      </button>
+      <button 
+        x-show="!started"
+        id="start-button" 
+        @click="startCapture()" 
+      >
+        Start
+      </button>
+    </div>
+  </div>
+
+  <div 
+    x-show="isFinished()"
+    class="container-center" 
+    id="preview-container" 
+  >
+    <h1><i>Let's Pick Photos</i></h1>
+    <div x-show="photosData.length > 0" x-data="{ photoIndex: 0 }" class="image-selector">
       <!-- Previous Button -->
       <button 
         class="image-selector-button"
@@ -47,67 +106,28 @@
         <i class="arrow arrow-right"></i>
       </button>
     </div>
-    <div x-show="!started">
-      <lable>Countdown in:</lable>
-      <select 
-        id="countdown-select" 
-        :value="countdown" 
-        @change="countdown = $event.target.value"
-      >
-        <option value="3">3s</option>
-        <option value="5">5s</option>
-        <option value="10">10s</option>
-      </select>
-    </div>
     <p 
       id="total-image" 
-      x-show="started && !isFinished()" 
-      x-text="`captured ${totalPhoto} of ${toCapture} photos`"
-    ></p>
-    <p 
-      id="total-image" 
-      x-show="isFinished()" 
       x-text="`selected ${selectedCount} of ${baseAmount} photos`"
-    ></p>
-    <p 
-      id="countdown" 
-      x-text="timer" 
-      x-show="started && !isFinished()"
     ></p>
     <div style="padding: 10px 0 10px 0;">
       <button 
-        id="next-button" 
-        @click="closeCamera()" 
-        x-show="!started"
-        hx-target="main" 
-        hx-get="./component/template.html"
-        hx-swap="innerHTML"
-      >
-        <i class="arrow arrow-left"></i>
-        Back
-      </button>
-      <button id="start-button" @click="startCapture()" x-show="!started">Start</button>
-      <button 
-          id="restart-button" 
-          style="display: none;" 
-          @click="reset()" 
-          x-show="isFinished()"
+        id="restart-button" 
+        @click="reset()" 
       >
         Retake
       </button>
       <button 
         id="next-button" 
-        style="display: none;" 
-        @click="closeCamera(); onNext()" 
-        x-show="isFinished()"
+        @click="onNext()" 
         :disabled="selectedCount !== baseAmount" 
       >
         Next 
         <i class="arrow arrow-right"></i>
       </button>
     </div>
-    <p x-show="isFinished()">Or take more and let choose!</p>
-    <div x-show="isFinished()">
+    <p>Or take more and let choose!</p>
+    <div>
       <select 
         x-ref="moreAmount"
         id="countdown-select" 
@@ -147,6 +167,7 @@
       videoWidth: 0,
       videoHeight: 0,
       selectedCount: 0,
+      facingMode: "user",
 
 
       init() {
@@ -160,9 +181,13 @@
         this.openCamera();
       },
       
-      openCamera() {
+      openCamera(facingMode) {
         navigator.mediaDevices
-        .getUserMedia({ video: true, audio: false })
+        .getUserMedia({ 
+          video: {
+            facingMode: this.facingMode,
+          }, 
+          audio: false })
         .then((stream) => {
           this.$refs.video.srcObject = stream;
           this.$refs.video.play();
@@ -187,6 +212,13 @@
               this.isRotated = false;
               this.$refs.video.style.transform = "none";
             }
+            
+            if(this.facingMode === "user") {
+              this.$refs.video.style.transform = "scaleX(-1)";
+            } else {
+              this.$refs.video.style.transform = "none";
+            }
+
             Alpine.store('capturedInfo', {
               width: this.width,
               height: this.height,
@@ -269,10 +301,12 @@
           sy = (videoHeight - sHeight) / 2; // Center crop
         }
 
-        // Mirror the image horizontally
-        context.save(); // Save the current state
-        context.translate(canvas.width, 0); // Move the origin to the right
-        context.scale(-1, 1); // Flip horizontally
+        if(this.facingMode === "user") {
+          // Mirror the image horizontally
+          context.save(); // Save the current state
+          context.translate(canvas.width, 0); // Move the origin to the right
+          context.scale(-1, 1); // Flip horizontally
+        }
 
         // Draw the image with the mirrored transformation
         context.drawImage(this.$refs.video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
@@ -301,6 +335,7 @@
       },
 
       onNext() {
+        this.closeCamera();
         let selectedPhotos = [];
         for(photo of this.photosData) {
           if(photo.selected) {
@@ -321,6 +356,18 @@
         if(this.photosData.length <= this.baseAmount || this.selectedCount === this.baseAmount) return false;
 
         return true;
+      },
+
+      mirrorCamera(mirror) {
+        if(mirror) {
+          this.facingMode = "user";
+          this.closeCamera();
+          this.openCamera();
+        } else {
+          this.facingMode = "environment"
+          this.closeCamera();
+          this.openCamera();
+        }
       },
     };
   }

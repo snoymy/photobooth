@@ -1,6 +1,7 @@
 :root {
   --blue: #0056fe;
 }
+
 .container-center {
   display: flex;
   flex-direction: column;
@@ -21,7 +22,6 @@
   position: relative;
   margin: 10px 0 10px 0;
   aspect-ratio: 3 / 2;
-  transform: scaleX(-1);
 }
 
 #video-overlay::before {
@@ -48,12 +48,14 @@
 #tools {
   margin: 10px;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   align-items: flex-start;
 }
 
 #tools div {
   margin: 10px;
+  display: flex;
+  align-items: center;
 }
 
 /*
@@ -68,9 +70,20 @@
 */
 
 #countdown {
+  position: absolute;
+  width: 50px;
+  height: 60px;
   font-size: 50px;
-  margin: 0px;
-  padding: 10px 0px;
+  padding: 0px 10px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 10px;
+  z-index: 2;
+  top: 85%;
+  left: 90%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  margin: auto;
+  text-align: center;
 }
 
 #total-image {
@@ -79,15 +92,44 @@
   padding: 10px 0px;
 }
 
-#previewer {
+#previewer-container {
+  position: relative;
   max-height: 70vh;
   max-width: 50%;
+}
+
+#previewer-overlay {
+  position: absolute;
+  background: black;
+  opacity: 0.5;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+#previewer-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  margin: 0 auto;
+  z-index: 9999;
+  font-size: 30px;
+  color: white;
+}
+
+#previewer {
+  width: 100%;
+  height: 100%;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
 }
 
 #customize-tools {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
 }
 
 .template-select {
@@ -159,7 +201,6 @@ button:disabled {
   position: relative;
   width: 60%;
   max-width: 1080px;
-  height: 100%;
   margin: 10px 0 10px 0;
   aspect-ratio: 3 / 2;
 }
@@ -181,3 +222,15 @@ button:disabled {
   cursor: pointer;
 }
 
+.pickr {
+  border: solid gray 2px;
+  border-radius: 5px;
+  width: 20px;
+  height: 20px;
+  max-width: 20px;
+  max-height: 20px;
+}
+
+.pickr:hover {
+  cursor: pointer;
+}

@@ -6,17 +6,17 @@
 >
   <h1><i>Customize Your Styles!</i></h1>
   <div id="customize-tools" style="padding: 10px 0 10px 0;">
-    <img id="previewer" :src="preview"/>
     <div id="tools">
       <div>
         <label>Background Color:</label>
-        <input type="color" id="bg-color" x-ref="colorPicker" @change="setBackgroundColor($event.target.value)">
+        <div class="pickr" x-ref="colorPicker"></div>
       </div>
 
       <div>
         <lable>Background Style:</lable>
         <select 
           id="countdown-select" 
+          style="margin-left: 5px;"
           value="/public/bg-style/doodle.png" 
           @change="setBackgroundStyle($event.target.value)"
         >
@@ -27,6 +27,11 @@
         </select>
       </div>
     </div>
+    <div id="previewer-container">
+      <div x-show="loadingPreview" id="previewer-overlay"></div>
+      <p x-show="loadingPreview" id="previewer-loading">Loading...</p>
+      <img id="previewer" :src="preview"/>
+    </div>
   </div>
   <div style="padding: 10px 0 10px 0;">
     <button id="download-button" @click="downloadImage()">Download</button>
@@ -34,6 +39,45 @@
 </div>
 
 <script>
+  const pickr = Pickr.create({
+    el: '.pickr',
+    theme: 'nano', // or 'monolith', or 'nano'
+    comparison: false,
+    default: '#ffffff', 
+    useAsButton: true,
+    swatches: [
+      '#F44336', // Red
+      '#E91E63', // Pink
+      '#9C27B0', // Purple
+      '#673AB7', // Deep Purple
+      '#3F51B5', // Indigo
+      '#2196F3', // Blue
+      '#03A9F4', // Light Blue
+      '#00BCD4', // Cyan
+      '#009688', // Teal
+      '#4CAF50', // Green
+      '#8BC34A', // Light Green
+      '#CDDC39', // Lime
+      '#FFEB3B', // Yellow
+      '#FFC107'  // Amber
+    ],
+
+    components: {
+      // Main components
+      preview: true,
+      opacity: false,
+      hue: true,
+
+      // Input / output Options
+      interaction: {
+        hex: true,
+        rgba: true,
+        input: true,
+        cancel: false,
+        save: false, 
+      }
+    },
+  });
   function customizeState() {
     const svg = Alpine.store('templateInfo').svg;
     const urls = Alpine.store('images');
@@ -106,13 +150,18 @@
     }
 
     return {
-      preview: null,
+      preview: null, loadingPreview: false,
       async updatePreview() {
         this.preview = await inlineSvgToDataUrl(svg.outerHTML);
       },
 
       async init() {
         const images = svg.getElementsByClassName("img");
+
+        pickr.on('hide', instance => {
+          this.setBackgroundColor(instance.getColor().toHEXA())
+          this.$refs.colorPicker.style.background = instance.getColor().toHEXA();
+        })
 
         return new Promise(async (resolve, reject) => {
           for(let i = 0; i < images.length; i++) {
@@ -146,7 +195,8 @@
           const bgColor = svg.getElementById("bg-color");
           if(bgColor) {
             const color = bgColor.getAttribute("style").match(/fill:\s*([^;]+)/)[1];
-            this.$refs.colorPicker.value = color;
+            pickr.setColor(color);
+            this.$refs.colorPicker.style.background = color;
           }
           await this.updatePreview();
           resolve()
@@ -156,9 +206,11 @@
       async setBackgroundStyle(style) {
         const bgStyle = svg.getElementById("bg-style");
         if(bgStyle) {
+          this.loadingPreview = true;
           if(!style) {
             bgStyle.setAttributeNS(null, "style", `display:none`);
             await this.updatePreview();
+            this.loadingPreview = false;
             return;
           }
 
@@ -177,14 +229,17 @@
           bgStyle.setAttributeNS(null, "width", newWidth);
           await this.updatePreview();
         }
+        this.loadingPreview = false;
       },
 
       async setBackgroundColor(color) {
+        this.loadingPreview = true;
         const bgColor = svg.getElementById("bg-color");
         if(bgColor) {
           bgColor.setAttributeNS(null, "style", `fill:${color};`)
           await this.updatePreview();
         }
+        this.loadingPreview = false;
       },
 
       async downloadImage() {
