@@ -27,12 +27,11 @@
       </video>
     </div>
     <div x-show="!started && !mobile" style="margin-bottom: 10px;">
-      <lable>Mirror:</lable>
-      <input 
-        type="checkbox" 
-        @change="mirrorCamera($event.target.checked)"
-        checked
-      />
+      <button
+        @click="mirrorCamera(!mirror)"
+        x-text="`Mirror: ${mirror? 'On' : 'Off'}`"
+      >
+      </button>
     </div>
     <div x-show="!started && mobile" style="margin-bottom: 10px;">
       <button
@@ -192,6 +191,7 @@
       selectedCount: 0,
       mirror: true,
       mobile: true,
+      facingMode: "user";
 
 
       init() {
@@ -205,6 +205,7 @@
         this.mirror = true;
         if(isMobile()) {
           this.mobile = true;
+          this.facingMode = "user";
         } else {
           this.mobile = false;
         }
@@ -215,10 +216,9 @@
       openCamera(facingMode) {
         navigator.mediaDevices
         .getUserMedia({ 
-          video: this.mobile ? { 
-            facingMode: this.mirror ? "user" : "environment" 
-          } : true, 
-          audio: false })
+          video: this.mobile ? { facingMode: this.facingMode, } : true, 
+          audio: false ,
+        })
         .then((stream) => {
           this.$refs.video.srcObject = stream;
           this.$refs.video.play();
@@ -388,6 +388,20 @@
         if(this.photosData.length <= this.baseAmount || this.selectedCount === this.baseAmount) return false;
 
         return true;
+      },
+
+      flipCamera(selfie) {
+        if(selfie) {
+          this.mirror = true;
+          this.facingMode = "user";
+          this.closeCamera();
+          this.openCamera();
+        } else {
+          this.mirror = false;
+          this.facingMode = "environment";
+          this.closeCamera();
+          this.openCamera();
+        }
       },
 
       mirrorCamera(mirror) {
