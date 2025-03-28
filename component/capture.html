@@ -205,9 +205,7 @@
       openCamera(facingMode) {
         navigator.mediaDevices
         .getUserMedia({ 
-          video: {
-            facingMode: this.mirror ? true : {facingMode: "environment"},
-          }, 
+          video: this.mirror ? true : { facingMode: "environment" }, 
           audio: false })
         .then((stream) => {
           this.$refs.video.srcObject = stream;
