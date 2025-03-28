@@ -14,7 +14,17 @@
         id="countdown" 
         x-text="timer" 
       ></p>
-      <video id="video" class="camera" x-ref="video">Video stream not available.</video>
+      <video 
+        id="video" 
+        class="camera" 
+        x-ref="video" 
+        autoplay="" 
+        playsinline="" 
+        disablepictureinpicture="" 
+        disableremoteplayback=""
+      >
+        Video stream not available.
+      </video>
     </div>
     <div x-show="!started && !mobile" style="margin-bottom: 10px;">
       <lable>Mirror:</lable>
@@ -205,7 +215,9 @@
       openCamera(facingMode) {
         navigator.mediaDevices
         .getUserMedia({ 
-          video: this.mirror ? true : { facingMode: "environment" }, 
+          video: this.mobile ? { 
+            facingMode: this.mirror ? "user" : "environment" 
+          } : true, 
           audio: false })
         .then((stream) => {
           this.$refs.video.srcObject = stream;
