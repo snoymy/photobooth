@@ -20,14 +20,14 @@
           @click="mirrorCamera(!mirror)"
           style="background: rgba(255 ,255, 255, 0.7); width: 50px; height: 50px;"
         >
-          <img src="./public/assets/mirror.svg" :style="`max-width: 100%; max-height: 100%; transform: ${mirror? 'scaleX(-1)' : 'scaleX(1)'};`"/>
+          <img src="./public/assets/mirror.svg" :style="`max-width: 100%; max-height: 100%; transition: transform 0.5s; transform: ${mirror? 'scaleX(-1)' : 'scaleX(1)'};`"/>
         </button>
         <button
           x-show="mobile"
           @click="flipCamera(!mirror)"
           style="background: rgba(255 ,255, 255, 0.7); width: 50px; height: 50px;"
         >
-          <img :src="mirror? './public/assets/portrait.svg' : './public/assets/landscape.svg'" :style="`max-width: 100%; max-height: 100%; transform: ${mirror? 'scaleX(-1)' : 'scaleX(1)'};`"/>
+          <img src="./public/assets/rotate.svg" :style="`max-width: 100%; max-height: 100%; transition: transform 0.5s; transform: ${mirror? 'rotate(180deg)' : 'rotate(0)'};`"/>
         </button>
       </div>
       <video 
@@ -59,11 +59,10 @@
       id="total-image" 
       x-text="`captured ${totalPhoto} of ${toCapture} photos`"
     ></p>
-    <div x-show="photosData.length === 0" style="padding: 10px 0 10px 0;">
+    <div x-show="photosData.length === 0 && !started" style="padding: 10px 0 10px 0;">
       <button 
         id="next-button" 
         @click="closeCamera()" 
-        x-show="!started"
         hx-target="main" 
         hx-get="./component/template.html"
         hx-swap="innerHTML"
@@ -72,14 +71,13 @@
         Back
       </button>
       <button 
-        x-show="!started"
         id="start-button" 
         @click="startCapture()" 
       >
         Start
       </button>
     </div>
-    <div x-show="photosData.length > 0" style="padding: 10px 0 10px 0;">
+    <div x-show="photosData.length > 0 && !started" style="padding: 10px 0 10px 0;">
       <select 
         x-ref="moreAmount"
         id="countdown-select" 
