@@ -53,6 +53,7 @@
       async init() {
         let tempTemplateInfoList = [];
         let tempPreviewUrlList = [];
+        this.$refs.main.classList.remove("fade-hide");
         for(const template of Alpine.store("templatePathList")) {
           const templateInfo = await this.getTemplateInfo(template);
           const previewUrl = await this.getPreviewUrl(templateInfo.svg);
@@ -70,7 +71,6 @@
           height: 720,
         });
         this.ready = true;
-        this.$refs.main.classList.remove("fade-hide");
       },
 
       async getTemplateInfo(template) {
