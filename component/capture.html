@@ -1,6 +1,8 @@
 <div 
+  style="position: relative;"
   x-data="cameraState()"
 >
+  <div x-ref="blocker" style="position: absolute; min-width: 100%; min-height: 100%; display: none;"></div>
   <div 
     x-show="!isFinished()"
     class="container-center" 
@@ -64,10 +66,7 @@
     <div x-show="photosData.length === 0 && !started" style="padding: 10px 0 10px 0;">
       <button 
         id="next-button" 
-        @click="closeCamera()" 
-        hx-target="main" 
-        hx-get="./component/template.html"
-        hx-swap="innerHTML"
+        @click="onBack()" 
       >
         <i class="arrow arrow-left"></i>
         Back
@@ -169,13 +168,12 @@
       </button>
     </div>
     <p>Or take more and let choose!</p>
-      <button 
-        id="restart-button" 
-        @click="takeMore()" 
-      >
-        Take more!
-      </button>
-    </div>
+    <button 
+      id="restart-button" 
+      @click="takeMore()" 
+    >
+      Take more!
+    </button>
   </div>
 </div>
 
@@ -397,6 +395,17 @@
           htmx.ajax('GET', './component/customize.html', {target:'main', swap:'innerHTML'})
         }, { once: true });
 
+        this.$refs.blocker.style.display = "inline-block";
+        this.$refs.main.classList.add("fade-hide");
+      },
+
+      onBack() {
+        this.closeCamera();
+        this.$refs.main.addEventListener("transitionend", (event) => {
+          htmx.ajax('GET', './component/template.html', {target:'main', swap:'innerHTML'})
+        }, { once: true });
+
+        this.$refs.blocker.style.display = "inline-block";
         this.$refs.main.classList.add("fade-hide");
       },
 

@@ -61,6 +61,7 @@ body {
 }
 
 #video-overlay {
+  color: white;
   width: 60%;
   max-width: 1080px;
   height: 100%;
@@ -119,11 +120,12 @@ body {
   width: 50px;
   height: 60px;
   font-size: 50px;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.8);
   border-radius: 10px;
   z-index: 2;
-  bottom: 2%;
-  right: 2%;
+  top: 0px;
+  left: 50%;
+  transform: translate(-50%, -45%);
 }
 
 #total-image {

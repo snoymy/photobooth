@@ -3,6 +3,7 @@
   x-data="customizeState()"
   x-init="await init()"
 >
+  <div x-ref="blocker" style="position: absolute; min-width: 100%; min-height: 100%; display: none;"></div>
   <h1>Choose Your Styles!</h1>
   <div id="customize-tools" style="padding: 10px 0 10px 0;">
     <div id="tools">
@@ -34,52 +35,58 @@
   </div>
   <div style="padding: 10px 0 10px 0;">
     <button id="download-button" @click="downloadImage()">Download</button>
+    <button 
+      id="next-button" 
+      @click="onRestart()" 
+    >
+      Restart!
+    </button>
   </div>
 </div>
 
 <script>
-  const pickr = Pickr.create({
-    el: '.pickr',
-    theme: 'nano', // or 'monolith', or 'nano'
-    comparison: false,
-    default: '#ffffff', 
-    useAsButton: true,
-    swatches: [
-      '#F44336', // Red
-      '#E91E63', // Pink
-      '#9C27B0', // Purple
-      '#673AB7', // Deep Purple
-      '#3F51B5', // Indigo
-      '#2196F3', // Blue
-      '#03A9F4', // Light Blue
-      '#00BCD4', // Cyan
-      '#009688', // Teal
-      '#4CAF50', // Green
-      '#8BC34A', // Light Green
-      '#CDDC39', // Lime
-      '#FFEB3B', // Yellow
-      '#FFC107'  // Amber
-    ],
-
-    components: {
-      // Main components
-      preview: true,
-      opacity: false,
-      hue: true,
-
-      // Input / output Options
-      interaction: {
-        hex: true,
-        rgba: true,
-        input: true,
-        cancel: false,
-        save: false, 
-      }
-    },
-  });
   function customizeState() {
     const svg = Alpine.store('templateInfo').svg;
     const urls = Alpine.store('images');
+    const pickr = Pickr.create({
+      el: '.pickr',
+      theme: 'nano', // or 'monolith', or 'nano'
+      comparison: false,
+      default: '#ffffff', 
+      useAsButton: true,
+      swatches: [
+        '#F44336', // Red
+        '#E91E63', // Pink
+        '#9C27B0', // Purple
+        '#673AB7', // Deep Purple
+        '#3F51B5', // Indigo
+        '#2196F3', // Blue
+        '#03A9F4', // Light Blue
+        '#00BCD4', // Cyan
+        '#009688', // Teal
+        '#4CAF50', // Green
+        '#8BC34A', // Light Green
+        '#CDDC39', // Lime
+        '#FFEB3B', // Yellow
+        '#FFC107'  // Amber
+      ],
+
+      components: {
+        // Main components
+        preview: true,
+        opacity: false,
+        hue: true,
+
+        // Input / output Options
+        interaction: {
+          hex: true,
+          rgba: true,
+          input: true,
+          cancel: false,
+          save: false, 
+        }
+      },
+    });
 
     const getFormattedDate = () => {
       const now = new Date();
@@ -250,6 +257,15 @@
         a.href = uri;
         a.download = `photobooth_${getFormattedDate()}.png`;
         a.click();
+      },
+
+      onRestart() {
+        this.$refs.main.addEventListener("transitionend", (event) => {
+          htmx.ajax('GET', './component/template.html', {target:'main', swap:'innerHTML'})
+        }, { once: true });
+
+        this.$refs.blocker.style.display = "inline-block";
+        this.$refs.main.classList.add("fade-hide");
       },
     };
   }

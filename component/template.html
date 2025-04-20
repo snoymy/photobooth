@@ -1,7 +1,9 @@
 <div 
   class="container-center"
+  style="postion: relative;"
   x-data="templateState" 
 >
+  <div x-ref="blocker" style="position: absolute; min-width: 100%; min-height: 100%; display: none;"></div>
   <h1>Pick Your Layout!</h1>
   <p x-show="!ready">Loading...</p>
   <div id="template-select-container">
@@ -62,6 +64,11 @@
         this.templateInfoList = tempTemplateInfoList;
         this.previewUrlList = tempPreviewUrlList;
         Alpine.store("templateInfo", this.templateInfoList[this.selectedIndex]);
+        Alpine.store('images', []);
+        Alpine.store('capturedInfo', {
+          width: 1080,
+          height: 720,
+        });
         this.ready = true;
         this.$refs.main.classList.remove("fade-hide");
       },
@@ -92,6 +99,7 @@
           htmx.ajax('GET', './component/capture.html', {target:'main', swap:'innerHTML'});
         }, { once: true });
 
+        this.$refs.blocker.style.display = "inline-block";
         this.$refs.main.classList.add("fade-hide");
       },
     }
