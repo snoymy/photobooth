@@ -1,13 +1,15 @@
 <div 
-  x-transition
   x-data="cameraState()"
 >
   <div 
     x-show="!isFinished()"
     class="container-center" 
     id="camera-container" 
+    x-transition.opacity
+    x-transition:enter.duration.500ms
+    x-transition:leave.duration.0ms
   >
-    <h1><i>Take Pictures!</i></h1>
+    <h1>Take Pictures!</h1>
     <div id="video-overlay" x-ref="overlay">
       <p 
         x-show="started" 
@@ -74,15 +76,16 @@
         id="start-button" 
         @click="startCapture()" 
       >
-        Start
+        📸 Start!
       </button>
     </div>
     <div x-show="photosData.length > 0 && !started" style="padding: 10px 0 10px 0;">
       <select 
         x-ref="moreAmount"
         id="countdown-select" 
-        value="3" 
+        value="1" 
       >
+        <option value="1">1 pictures</option>
         <option value="3">3 pictures</option>
         <option value="5">5 pictures</option>
         <option value="10">10 pictures</option>
@@ -100,9 +103,12 @@
     x-show="isFinished()"
     class="container-center" 
     id="preview-container" 
+    x-transition.opacity
+    x-transition:enter.duration.500ms
+    x-transition:leave.duration.0ms
   >
-    <h1><i>Let's Pick Photos</i></h1>
-    <div x-show="photosData.length > 0" x-data="{ photoIndex: 0 }" class="image-selector">
+    <h1>Let's Pick!</h1>
+    <div x-show="photosData.length > 0" class="image-selector">
       <!-- Previous Button -->
       <button 
         class="image-selector-button"
@@ -117,6 +123,8 @@
         <img 
           class="captured-image" 
           :src="photosData[photoIndex] && photosData[photoIndex].image"
+          @click="canToggle(photoIndex) && toggleSelectPhoto(photoIndex, !photosData[photoIndex].selected)"
+          :style="canToggle(photoIndex) ? 'cursor: pointer' : 'cursor: not-allowed'"
         />
         
         <!-- Checkbox Overlay -->
@@ -127,6 +135,7 @@
           :checked="photosData[photoIndex] && photosData[photoIndex].selected" 
           :disabled="!canToggle(photoIndex)"
           class="image-checkbox"
+          :style="canToggle(photoIndex) ? 'cursor: pointer' : 'cursor: not-allowed'"
         />
       </div>
 
@@ -199,16 +208,13 @@
       mirror: true,
       mobile: true,
       facingMode: "user",
+      photoIndex: 0,
 
       init() {
         this.baseAmount = Alpine.store('templateInfo').totalImages;
         this.toCapture = this.baseAmount;
-        //screen.orientation.addEventListener("change", () => {
-        //  console.log("rotate")
-        //  this.openCamera();
-        //});
-
         this.mirror = true;
+
         if(isMobile()) {
           this.mobile = true;
           this.facingMode = "user";
@@ -217,6 +223,7 @@
         }
 
         this.openCamera();
+        this.$refs.main.classList.remove("fade-hide");
       },
       
       openCamera(facingMode) {
@@ -290,6 +297,7 @@
             this.selectedCount += this.totalPhoto <= this.baseAmount ? 1 : 0;
             if (this.totalPhoto === this.toCapture) {
               clearInterval(interval);
+              this.photoIndex = 0;
             } else {
               this.timer = this.countdown;
             }
@@ -385,7 +393,11 @@
           }
         }
         Alpine.store('images', selectedPhotos);
-        htmx.ajax('GET', './component/customize.html', {target:'main', swap:'innerHTML'})
+        this.$refs.main.addEventListener("transitionend", (event) => {
+          htmx.ajax('GET', './component/customize.html', {target:'main', swap:'innerHTML'})
+        }, { once: true });
+
+        this.$refs.main.classList.add("fade-hide");
       },
 
       toggleSelectPhoto(index, select) {

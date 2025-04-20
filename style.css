@@ -1,5 +1,50 @@
 :root {
-  --blue: #0056fe;
+  --primary: #f9a825;
+}
+
+h1 {
+  color: white;
+}
+
+body {
+  color: white;
+  background-color: #16161d;
+  font-family: Arial, Helvetica, sans-serif;
+  opacity: 100%;
+}
+
+.fade-hide {
+  opacity: 0%;
+}
+
+.fade-show {
+  opacity: 100%;
+}
+
+.transition-fade {
+  transition: opacity 0.5s;
+}
+
+.collapse-show {
+  max-height: 100%;
+}
+
+.collapse-hide {
+  max-height: 0%;
+}
+
+.transition-collapse {
+  overflow: hidden;
+  transition: max-height 0.5s;
+}
+
+.welcome-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
 }
 
 .container-center {
@@ -49,7 +94,7 @@
   margin: 10px;
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
 }
 
 #tools div {
@@ -127,6 +172,12 @@
   align-items: center;
 }
 
+#template-select-container {
+  max-height: 70vh;
+  overflow: scroll;
+  margin-bottom: 10px;
+}
+
 .template-select {
   height: 20vh;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
@@ -140,14 +191,15 @@
 }
 
 select {
-  border: none;
-  padding: 10px;
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
   border-radius: 10px;
-  width: 100px;
+  padding: 7px;
 }
 
 button {
-  background-color: var(--blue);
+  background-color: var(--primary);
   color: white;
   font-weight: bold;
   border: none;
@@ -161,7 +213,8 @@ button:hover {
 }
 
 button:disabled {
-  background-color: #e8e8e8;
+  background-color: #d8d8d8;
+  cursor: not-allowed;
 }
 
 .arrow {
@@ -183,6 +236,7 @@ button:disabled {
 
 .image-selector-button{
   width: 50px;
+  height: 50px;
 }
 
 .image-selector {
@@ -212,8 +266,8 @@ button:disabled {
   position: absolute;
   top: 10px;
   left: 10px;
-  width: 20px;
-  height: 20px;
+  width: 50px;
+  height: 50px;
   cursor: pointer;
 }
 

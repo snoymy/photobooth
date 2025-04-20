@@ -1,19 +1,18 @@
 <div 
-  class="container-center" 
+  class="container-center"
   x-data="customizeState()"
   x-init="await init()"
-  x-transition
 >
-  <h1><i>Customize Your Styles!</i></h1>
+  <h1>Choose Your Styles!</h1>
   <div id="customize-tools" style="padding: 10px 0 10px 0;">
     <div id="tools">
       <div>
-        <label>Background Color:</label>
+        <label><b>Background Color:</b></label>
         <div class="pickr" x-ref="colorPicker"></div>
       </div>
 
       <div>
-        <lable>Background Style:</lable>
+        <lable><b>Background Style:</b></lable>
         <select 
           id="countdown-select" 
           style="margin-left: 5px;"
@@ -199,6 +198,7 @@
             this.$refs.colorPicker.style.background = color;
           }
           await this.updatePreview();
+          this.$refs.main.classList.remove("fade-hide");
           resolve()
         })
       },
