@@ -17,15 +17,15 @@
 
   <img src="public/assets/example.png" style="width: 80%; max-width: 480px; height: auto;"/>
 
-  <div x-data="{showFeature: false}">
+  <div x-data="{open: false}">
     <h3 
-      style="font-size: 22px; margin-top: 1em; cursor: pointer;" 
-      @click="showFeature = !showFeature"
+      style="font-size: 22px; margin-top: 5px; cursor: pointer;" 
+      @click="open = !open"
     >
-      📸 Key Features <span x-text="showFeature ? '&#9650;' : '&#9660;'"></span>
+      📸 Key Features <span x-text="open ? '&#9650;' : '&#9660;'"></span>
     </h3>
     <div 
-      x-show="showFeature" 
+      x-show="open" 
       x-transition:enter="transition-collapse" 
       x-transition:enter-start="collapse-hide" 
       x-transition:enter-end="collapse-show" 
@@ -42,13 +42,37 @@
     </div>
   </div>
 
+  <div x-data="{open: false}">
+    <h3 
+      style="font-size: 22px; margin-top: 5px; cursor: pointer;" 
+      @click="open = !open"
+    >
+      Credits <span x-text="open ? '&#9650;' : '&#9660;'"></span>
+    </h3>
+    <div 
+      x-show="open" 
+      x-transition:enter="transition-collapse" 
+      x-transition:enter-start="collapse-hide" 
+      x-transition:enter-end="collapse-show" 
+      x-transition:leave="transition-collapse" 
+      x-transition:leave-start="collapse-show" 
+      x-transition:leave-end="collapse-hide" 
+      style="text-align: start; padding: 10px; border: 1px solid gray; border-radius: 10px"
+    >
+      <h3>Background Styles</h3>
+      <div>• <b>Doodle</b> - <a href="https://pixabay.com/vectors/doodle-background-drawing-pattern-4181783/">greissdesign</a></div>
+      <div>• <b>Heart</b> - <a href="https://pixabay.com/vectors/simple-courageous-valentin-pattern-1589171/">starchim01</a></div>
+      <div>• <b>Flower</b> - <a href="https://pixabay.com/vectors/flowers-background-dainty-pretty-4931217/">Gaelica11</a></div>
+    </div>
+  </div>
+
   <p style="margin-top: 1em; font-size: 15px">
     &#9432; <i>Works best on Chrome-based browsers on mobile devices.
     </i>
   </p>
 
   <a href="photobooth.html">
-    <button>
+    <button style="width: 100px;">
       Let's start!
     </button>
   </a>

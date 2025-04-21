@@ -107,4 +107,13 @@
        x="18.734495"
        y="23.276672"
        clip-path="url(#clipPath2-4)"
-       transform="translate(-0.32481444,329.01013)" /></g></svg>
+       transform="translate(-0.32481444,329.01013)" /><text
+       xml:space="preserve"
+       style="font-size:6.05655px;line-height:1.25;font-family:Monospace;-inkscape-font-specification:Monospace;text-align:center;text-anchor:middle;display:inline;opacity:0;stroke-width:0.412946"
+       x="7.5826941"
+       y="469.49423"
+       id="timestamp"><tspan
+         id="tspan1"
+         style="text-align:start;text-anchor:start;stroke-width:0.412946"
+         x="7.5826941"
+         y="469.49423">YYYY-MM-DDTHH:mm:ss.sssZ</tspan></text></g></svg>

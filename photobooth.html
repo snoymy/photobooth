@@ -58,6 +58,56 @@
         height: 720,
       });
     });
+
+    function formatTimestamp(timestamp, formatStr, timezone = getLocalOffsetString()) {
+      const offsetMinutes = parseTimezoneOffset(timezone);
+      const date = new Date(timestamp + offsetMinutes * 60 * 1000);
+
+      const weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const weekdaysFull = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+      const monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      const monthsFull = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+
+      const map = {
+        YYYY: date.getUTCFullYear(),
+        MM: String(date.getUTCMonth() + 1).padStart(2, '0'),
+        DD: String(date.getUTCDate()).padStart(2, '0'),
+        HH: String(date.getUTCHours()).padStart(2, '0'),
+        mm: String(date.getUTCMinutes()).padStart(2, '0'),
+        ss: String(date.getUTCSeconds()).padStart(2, '0'),
+        MMM: monthsShort[date.getUTCMonth()],
+        MMMM: monthsFull[date.getUTCMonth()],
+        ddd: weekdaysShort[date.getUTCDay()],
+        dddd: weekdaysFull[date.getUTCDay()],
+      };
+
+      return formatStr.replace(/YYYY|MMMM|MMM|MM|DD|dddd|ddd|HH|mm|ss/g, (match) => map[match]);
+    }
+
+    function parseTimezoneOffset(offsetStr) {
+      const match = offsetStr.match(/^([+-])(\d{2}):(\d{2})$/);
+      if (!match) return 0;
+
+      const sign = match[1] === '+' ? 1 : -1;
+      const hours = parseInt(match[2], 10);
+      const minutes = parseInt(match[3], 10);
+      return sign * (hours * 60 + minutes);
+    }
+
+    function getLocalOffsetString() {
+      const offset = -new Date().getTimezoneOffset(); // reverse the sign
+      const sign = offset >= 0 ? '+' : '-';
+      const absOffset = Math.abs(offset);
+      const hours = String(Math.floor(absOffset / 60)).padStart(2, '0');
+      const minutes = String(absOffset % 60).padStart(2, '0');
+      return `${sign}${hours}:${minutes}`;
+    }
+
+
   </script>
 
 </body>

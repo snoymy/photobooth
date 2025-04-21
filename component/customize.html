@@ -1,7 +1,6 @@
 <div 
   class="container-center"
   x-data="customizeState()"
-  x-init="await init()"
 >
   <div x-ref="blocker" style="position: absolute; min-width: 100%; min-height: 100%; display: none;"></div>
   <h1>Choose Your Styles!</h1>
@@ -20,10 +19,43 @@
           value="/public/bg-style/doodle.png" 
           @change="setBackgroundStyle($event.target.value)"
         >
-          <option value="">None</option>
+          <option value="">--None--</option>
         <template x-for="bgStyle in $store.bgStyleList">
           <option :value="bgStyle.path" x-text="bgStyle.name"></option>
         </template>
+        </select>
+      </div>
+      <div>
+        <lable><b>Timestamp Format:</b></lable>
+        <select 
+          id="countdown-select" 
+          style="margin-left: 5px;"
+          value="" 
+          @change="setTimestamp($event.target.value)"
+        >
+          <option value="">--None--</option>
+
+          <!-- Date + Time formats -->
+          <option value="" disabled>--Date + Time--</option>
+          <option :value="formatTimestamp(currentTimestamp, 'DD/MM/YYYY HH:mm')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'DD-MM-YYYY HH:mm')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'DD MMM YYYY HH:mm')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'DD MMMM YYYY HH:mm')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'YYYY-MM-DD HH:mm')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'YYYY/MM/DD HH:mm')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'MMM DD, YYYY HH:mm')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'MMMM DD, YYYY HH:mm')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'ddd DD MMM YYYY HH:mm')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'dddd, DD MMMM YYYY HH:mm')" x-text="$el.value"></option>
+
+          <!-- Date only formats -->
+          <option value="" disabled>--Date only--</option>
+          <option :value="formatTimestamp(currentTimestamp, 'DD/MM/YYYY')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'DD-MM-YYYY')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'YYYY-MM-DD')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'MMM DD, YYYY')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'MMMM DD, YYYY')" x-text="$el.value"></option>
+          <option :value="formatTimestamp(currentTimestamp, 'dddd, DD MMMM YYYY')" x-text="$el.value"></option>
         </select>
       </div>
     </div>
@@ -165,8 +197,37 @@
       });
     }
 
+    function hexToRgb(hex) {
+      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    }
+
+    function parseRgbToObject(rgbString) {
+      const result = rgbString.match(/\d+/g);
+      if (!result || result.length < 3) return null;
+
+      return {
+        r: parseInt(result[0], 10),
+        g: parseInt(result[1], 10),
+        b: parseInt(result[2], 10)
+      };
+    }
+
+    function isDark(rgb){
+      const brightness = Math.round(((parseInt(rgb.r) * 299) +   (parseInt(rgb.g) * 587) + (parseInt(rgb.b) * 114)) / 1000);
+      if(brightness < 150){
+        return true;
+      } else {
+        return false;
+      }
+    }
+
     return {
-      preview: null, loadingPreview: false,
+      preview: null, loadingPreview: false, currentTimestamp: Date.now(),
       async updatePreview() {
         this.preview = await inlineSvgToDataUrl(svg.outerHTML);
       },
@@ -225,14 +286,14 @@
         if(bgStyle) {
           this.loadingPreview = true;
           if(!style) {
-            bgStyle.setAttributeNS(null, "style", `display:none`);
+            bgStyle.style.display = "none";
             await this.updatePreview();
             this.loadingPreview = false;
             return;
           }
 
           const url = await fetchImageAsDataURL(style);
-          bgStyle.setAttributeNS(null, "style", "")
+          bgStyle.style.display = "inline";
 
           const imageSize = await getImageSize(url)
 
@@ -249,11 +310,50 @@
         this.loadingPreview = false;
       },
 
+      async updateTimestampColor() {
+        const timestamp = svg.getElementById("timestamp");
+        if(timestamp.style.opacity) {
+          const timestamp = svg.getElementById("timestamp");
+          const tspan = timestamp.getElementsByTagName("tspan")[0];
+
+          const bgColor = svg.getElementById("bg-color");
+          const color = bgColor.style.fill;
+          if(isDark(parseRgbToObject(color))) {
+            tspan.style.fill = "#ffffff";
+          } else {
+            tspan.style.fill = "#000000";
+          }
+        }
+      },
+
+      async setTimestamp(text) {
+        const timestamp = svg.getElementById("timestamp");
+        if(timestamp) {
+          this.loadingPreview = true;
+          if(!text) {
+            timestamp.style.opacity = "0";
+            await this.updatePreview();
+            this.loadingPreview = false;
+            return;
+          }
+
+          timestamp.style.opacity = "1";
+          const tspan = timestamp.getElementsByTagName("tspan")[0];
+          tspan.innerHTML = text;
+          
+          this.updateTimestampColor();
+
+          await this.updatePreview();
+        }
+        this.loadingPreview = false;
+      },
+
       async setBackgroundColor(color) {
         this.loadingPreview = true;
         const bgColor = svg.getElementById("bg-color");
         if(bgColor) {
-          bgColor.setAttributeNS(null, "style", `fill:${color};`)
+          bgColor.style.fill = color;
+          this.updateTimestampColor();
           await this.updatePreview();
         }
         this.loadingPreview = false;
