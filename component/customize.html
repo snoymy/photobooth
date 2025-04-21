@@ -80,8 +80,9 @@
       id="next-button" 
       @click="onRestart()" 
       class="ghost"
+      style="padding: 0; font-size: 17px"
     >
-      Start it again!
+      Start again!
     </button>
   </div>
 </div>
@@ -163,11 +164,16 @@
       return `data:image/svg+xml,${encodeURIComponent(svgString)}`;
     }
 
-    const inlineImageToDataUrl = (svgString) => {
-      return `data:image/png,${encodeURIComponent(svgString)}`;
+    const blobToBase64 = async (blob) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result); // result is a data URL (base64)
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
     }
 
-    fetchImageAsDataURL = async (url) => {
+    const fetchImageAsDataURL = async (url) => {
       return new Promise((resolve, reject) => {
         let img = new Image();
         img.crossOrigin = "Anonymous"; // Request image with CORS
@@ -197,15 +203,6 @@
       });
     }
 
-    function hexToRgb(hex) {
-      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-      } : null;
-    }
-
     function parseRgbToObject(rgbString) {
       const result = rgbString.match(/\d+/g);
       if (!result || result.length < 3) return null;
@@ -228,11 +225,16 @@
 
     return {
       preview: null, loadingPreview: false, currentTimestamp: Date.now(),
+
       async updatePreview() {
         this.preview = await inlineSvgToDataUrl(svg.outerHTML);
       },
 
       async init() {
+        svg.querySelectorAll("text").forEach(text => {
+          text.style.fontFamily = 'CommitMono';
+        });
+
         const images = svg.getElementsByClassName("img");
 
         pickr.on('hide', instance => {
@@ -314,7 +316,7 @@
         const timestamp = svg.getElementById("timestamp");
         if(timestamp.style.opacity) {
           const timestamp = svg.getElementById("timestamp");
-          const tspan = timestamp.getElementsByTagName("tspan")[0];
+          const tspan = timestamp.querySelector("tspan");
 
           const bgColor = svg.getElementById("bg-color");
           const color = bgColor.style.fill;
@@ -338,7 +340,7 @@
           }
 
           timestamp.style.opacity = "1";
-          const tspan = timestamp.getElementsByTagName("tspan")[0];
+          const tspan = timestamp.querySelector("tspan");
           tspan.innerHTML = text;
           
           this.updateTimestampColor();

@@ -2,6 +2,11 @@
   --primary: #f9a825;
 }
 
+@font-face {
+  font-family: 'CommitMono';
+  src: url('public/fonts/CommitMono-400-Regular.otf') format('opentype');
+}
+
 h1 {
   color: white;
 }
@@ -240,9 +245,12 @@ button:disabled {
 
 #template-select-container {
   max-height: 70vh;
-  overflow: scroll;
+  overflow-y: auto;
   margin: 0 10px 10px 10px;
   padding: 20px;
+  -ms-overflow-style: none;
+  scrollbar-color: gray #2c2c2c;
+  scrollbar-width: thin;
 }
 
 .template-select {
