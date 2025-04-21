@@ -30,6 +30,10 @@ select {
   padding: 7px;
 }
 
+option {
+  color: black;
+}
+
 button {
   background-color: var(--primary);
   color: white;
