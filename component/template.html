@@ -20,6 +20,7 @@
     x-show="ready"
     id="next-button" 
     @click="onNext()"
+    style="width: 100px"
   >
     Next 
     <i class="arrow arrow-right"></i>
@@ -51,6 +52,8 @@
       
 
       async init() {
+        this.$refs.blocker.style.display = "inline-block";
+        this.ready = false;
         let tempTemplateInfoList = [];
         let tempPreviewUrlList = [];
         this.$refs.main.classList.remove("fade-hide");
@@ -71,6 +74,7 @@
           height: 720,
         });
         this.ready = true;
+        this.$refs.blocker.style.display = "none";
       },
 
       async getTemplateInfo(template) {

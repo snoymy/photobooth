@@ -117,10 +117,9 @@ body {
 
 #countdown {
   position: absolute;
-  width: 50px;
-  height: 60px;
+  padding: 5px 10px;
   font-size: 50px;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.6);
   border-radius: 10px;
   z-index: 2;
   top: 0px;
@@ -207,7 +206,37 @@ button {
   border: none;
   padding: 10px;
   border-radius: 10px;
-  width: 100px;
+}
+
+button.ghost {
+  background-color: transparent;
+  color: var(--primary);
+}
+
+button.ghost > * {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+button.ghost:disabled {
+  background-color: transparent;
+  color: #d8d8d8;
+}
+
+button.ghost:disabled > * {
+  border-color: #d8d8d8;
+  color: #d8d8d8;
+}
+
+button.outline {
+  background-color: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+button.outline > * {
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 button:hover {
@@ -236,9 +265,11 @@ button:disabled {
   -webkit-transform: rotate(135deg);
 }
 
-.image-selector-button{
+.image-selector-button {
+  min-width: 0px;
   width: 50px;
   height: 50px;
+  font-size: 30px;
 }
 
 .image-selector {

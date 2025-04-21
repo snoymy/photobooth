@@ -63,10 +63,12 @@
       id="total-image" 
       x-text="`captured ${totalPhoto} of ${toCapture} photos`"
     ></p>
-    <div x-show="photosData.length === 0 && !started" style="padding: 10px 0 10px 0;">
+    <div x-show="photosData.length === 0 && !started" style="padding: 10px 0 10px 0; margin-top: 10px;">
       <button 
         id="next-button" 
         @click="onBack()" 
+        class="outline"
+        style="width: 100px"
       >
         <i class="arrow arrow-left"></i>
         Back
@@ -74,6 +76,7 @@
       <button 
         id="start-button" 
         @click="startCapture()" 
+        style="width: 100px"
       >
         📸 Start!
       </button>
@@ -110,11 +113,12 @@
     <div x-show="photosData.length > 0" class="image-selector">
       <!-- Previous Button -->
       <button 
-        class="image-selector-button"
+        class="image-selector-button ghost"
         :disabled="!(photosData.length > 1 && photoIndex > 0)" 
         @click="photoIndex--"
+        :style="!(photosData.length > 1 && photoIndex > 0) ? 'opacity: 0;' : 'opacity: 100%;'"
       >
-        <i class="arrow arrow-left"></i>
+        &#10096;
       </button>
 
       <!-- Image Wrapper -->
@@ -140,11 +144,12 @@
 
       <!-- Next Button -->
       <button 
-        class="image-selector-button"
+        class="image-selector-button ghost"
         :disabled="!(photosData.length > 1 && photoIndex < photosData.length - 1)" 
         @click="photoIndex++"
+        :style="!(photosData.length > 1 && photoIndex < photosData.length - 1) ? 'opacity: 0;' : 'opacity: 100%;'"
       >
-        <i class="arrow arrow-right"></i>
+        &#10097;
       </button>
     </div>
     <p 
@@ -153,27 +158,37 @@
     ></p>
     <div style="padding: 10px 0 10px 0;">
       <button 
-        id="restart-button" 
-        @click="reset()" 
-      >
-        Retake
-      </button>
-      <button 
         id="next-button" 
         @click="onNext()" 
         :disabled="selectedCount !== baseAmount" 
+        style="width: 100px"
       >
         Next 
         <i class="arrow arrow-right"></i>
       </button>
     </div>
-    <p>Or take more and let choose!</p>
-    <button 
-      id="restart-button" 
-      @click="takeMore()" 
-    >
-      Take more!
-    </button>
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; margin-top: 10px;">
+      <div style="display: flex; align-items: center;">
+        <p>Not happy yet? &nbsp;</p>
+        <button 
+          id="restart-button" 
+          @click="reset()" 
+          class="outline"
+        >
+          Retake
+        </button>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <p>&nbsp; Or &nbsp;</p>
+        <button 
+          id="restart-button" 
+          @click="takeMore()" 
+        >
+          Take more!
+        </button>
+        <p>&nbsp; and let choose!</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -360,6 +375,10 @@
       },
 
       reset() {
+        if(!confirm("You will lose the all photos you’ve taken.")) {
+          return
+        }
+
         this.started = false;
         this.totalPhoto = 0;
         this.streaming = false;
