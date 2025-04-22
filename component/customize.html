@@ -16,12 +16,26 @@
         <select 
           id="countdown-select" 
           style="margin-left: 5px;"
-          value="/public/bg-style/doodle.png" 
+          value="$store.bgStyleList[0].path" 
           @change="setBackgroundStyle($event.target.value)"
         >
           <option value="">--None--</option>
         <template x-for="bgStyle in $store.bgStyleList">
           <option :value="bgStyle.path" x-text="bgStyle.name"></option>
+        </template>
+        </select>
+      </div>
+      <div>
+        <lable><b>Sticker:</b></lable>
+        <select 
+          id="countdown-select" 
+          style="margin-left: 5px;"
+          value="$store.stickerList[0].path" 
+          @change="setDecoration($event.target.value ? $store.stickerList[$event.target.value].path : null)"
+        >
+          <option value="">--None--</option>
+        <template x-for="(sticker, i) in $store.stickerList">
+          <option :value="i" x-text="sticker.name"></option>
         </template>
         </select>
       </div>
@@ -89,6 +103,7 @@
 
 <script>
   function customizeState() {
+    const cache = {};
     const svg = Alpine.store('templateInfo').svg;
     const urls = Alpine.store('images');
     const pickr = Pickr.create({
@@ -294,7 +309,13 @@
             return;
           }
 
-          const url = await fetchImageAsDataURL(style);
+          let url;
+          if(cache[style]) {
+            url = cache[style];
+          } else {
+            url = await fetchImageAsDataURL(style);
+            cache[style] = url;
+          }
           bgStyle.style.display = "inline";
 
           const imageSize = await getImageSize(url)
@@ -309,6 +330,58 @@
           bgStyle.setAttributeNS(null, "width", newWidth);
           await this.updatePreview();
         }
+        this.loadingPreview = false;
+      },
+
+      async setDecoration(paths) {
+        this.loadingPreview = true;
+
+        const stickers = svg.getElementsByClassName(`sticker`);
+        for(sticker of stickers) {
+          sticker.style.display = "none";
+        }
+        
+        if(!paths) {
+          await this.updatePreview();
+          this.loadingPreview = false;
+          return;
+        }
+
+        let hasUpdate = false;
+        for(key of Object.keys(paths)) {
+          const stickers = svg.getElementById(`sticker-${key}`);
+          if(!stickers) {
+            continue;
+          }
+
+          let url;
+          const path = paths[key]
+          if(cache[path]) {
+            url = cache[path];
+          } else {
+            url = await fetchImageAsDataURL(path);
+            cache[path] = url;
+          }
+          for(sticker of stickers.querySelectorAll("image")) {
+            sticker.style.display = "inline";
+
+            const imageSize = await getImageSize(url)
+
+            const width = imageSize.width;
+            const height = imageSize.height;
+            const currentWidth = sticker.getAttribute("width");
+            const currentHeight = sticker.getAttribute("height");
+            const newHeight = currentHeight;
+            const newWidth = currentHeight*(width/height);
+            sticker.setAttributeNS("http://www.w3.org/1999/xlink", "href", url);
+            sticker.setAttributeNS(null, "width", newWidth);
+            hasUpdate = true;
+          }
+
+          stickers.style.display = "inline";
+        }
+
+        hasUpdate && await this.updatePreview();
         this.loadingPreview = false;
       },
 
