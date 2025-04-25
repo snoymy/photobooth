@@ -347,6 +347,21 @@
           return;
         }
 
+        const promises = [];
+        for(key of Object.keys(paths)) {
+          promises.push(
+            new Promise(async (resolve) => {
+              const path = paths[key]
+              if(!cache[path]) {
+                const url = await fetchImageAsDataURL(path);
+                cache[path] = url;
+              }
+              resolve()
+            })
+          );
+        }
+        await Promise.all(promises);
+        
         let hasUpdate = false;
         for(key of Object.keys(paths)) {
           const stickers = svg.getElementById(`sticker-${key}`);

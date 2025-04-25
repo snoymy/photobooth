@@ -54,19 +54,25 @@
       async init() {
         this.$refs.blocker.style.display = "inline-block";
         this.ready = false;
-        let tempTemplateInfoList = [];
-        let tempPreviewUrlList = [];
         this.$refs.main.classList.remove("fade-hide");
-        for(const template of Alpine.store("templatePathList")) {
-          const templateInfo = await this.getTemplateInfo(template);
-          const previewUrl = await this.getPreviewUrl(templateInfo.svg);
 
-          tempTemplateInfoList.push(templateInfo);
-          tempPreviewUrlList.push(previewUrl);
+        const templateInfoPromises = []
+        for(const template of Alpine.store("templatePathList")) {
+          const templateInfo = this.getTemplateInfo(template);
+          templateInfoPromises.push(templateInfo);
         }
+        const templateInfos = await Promise.all(templateInfoPromises);
+
+        const previewUrlPromises = []
+        for(const templateInfo of templateInfos) {
+          const previewUrl = this.getPreviewUrl(templateInfo.svg);
+          previewUrlPromises.push(previewUrl);
+        }
+        const tempPreviewUrls = await Promise.all(previewUrlPromises);
+
         this.selectedIndex = 0;
-        this.templateInfoList = tempTemplateInfoList;
-        this.previewUrlList = tempPreviewUrlList;
+        this.templateInfoList = templateInfos;
+        this.previewUrlList = tempPreviewUrls;
         Alpine.store("templateInfo", this.templateInfoList[this.selectedIndex]);
         Alpine.store('images', []);
         Alpine.store('capturedInfo', {
