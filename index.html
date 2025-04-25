@@ -17,7 +17,18 @@
 
   <img src="public/assets/example.png" style="width: 80%; max-width: 480px; height: auto;"/>
 
-  <div x-data="{open: false}">
+  <p style="margin-top: 1em; font-size: 15px">
+    &#9432; <i>Works best on Chrome-based browsers on mobile devices.
+    </i>
+  </p>
+
+  <a href="photobooth.html">
+    <button style="width: 100px;">
+      Let's start!
+    </button>
+  </a>
+
+  <div x-data="{open: false}" style="margin-top: 20px;">
     <h3 
       style="font-size: 22px; margin-top: 5px; cursor: pointer;" 
       @click="open = !open"
@@ -25,14 +36,8 @@
       📸 Key Features <span x-text="open ? '&#9650;' : '&#9660;'"></span>
     </h3>
     <div 
-      x-show="open" 
-      x-transition:enter="transition-collapse" 
-      x-transition:enter-start="collapse-hide" 
-      x-transition:enter-end="collapse-show" 
-      x-transition:leave="transition-collapse" 
-      x-transition:leave-start="collapse-show" 
-      x-transition:leave-end="collapse-hide" 
-      style="text-align: start; padding: 10px; border: 1px solid gray; border-radius: 10px;"
+      :class="`collapse-box ${open ? 'collapse-box-show' : ''}`"
+      style="opacity:0"
     >
       <div>• Choose from a variety of layouts and frames (not just squares!).</div>
       <div>• Support front and rear cameras on mobile device or mirror mode on desktop.</div>
@@ -50,14 +55,8 @@
       Credits <span x-text="open ? '&#9650;' : '&#9660;'"></span>
     </h3>
     <div 
-      x-show="open" 
-      x-transition:enter="transition-collapse" 
-      x-transition:enter-start="collapse-hide" 
-      x-transition:enter-end="collapse-show" 
-      x-transition:leave="transition-collapse" 
-      x-transition:leave-start="collapse-show" 
-      x-transition:leave-end="collapse-hide" 
-      style="text-align: start; padding: 10px; border: 1px solid gray; border-radius: 10px;"
+      :class="`collapse-box ${open ? 'collapse-box-show' : ''}`"
+      style="opacity:0"
     >
       <center>
         <h4 style="margin: 5px 0;">
@@ -70,17 +69,6 @@
       <div>• Christmas - <a href="https://pixabay.com/vectors/christmas-pattern-design-wallpaper-6809681/">satheeshsankaran</a></div>
     </div>
   </div>
-
-  <p style="margin-top: 1em; font-size: 15px">
-    &#9432; <i>Works best on Chrome-based browsers on mobile devices.
-    </i>
-  </p>
-
-  <a href="photobooth.html">
-    <button style="width: 100px;">
-      Let's start!
-    </button>
-  </a>
 </body>
 </html>
 
