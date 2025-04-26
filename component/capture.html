@@ -34,6 +34,117 @@
           <img src="./public/assets/rotate.svg" :style="`max-width: 100%; max-height: 100%; transition: transform 0.5s; transform: ${mirror? 'rotate(180deg)' : 'rotate(0)'};`"/>
         </button>
       </div>
+      <div x-show="!started" style="position: absolute; bottom: 2%; left: 2%; z-index: 2">
+        <select 
+          id="filter-select"
+          @change="setFilter($event.target.value)"
+        >
+          <!-- Common & Essential Filters -->
+          <option value="">Normal</option>
+          <optgroup label="Common & Essential Filters">
+            <option value="greyscale">Greyscale</option>
+            <option value="invert">Invert</option>
+            <option value="vintage">Vintage</option>
+            <option value="sunset">Sunset</option>
+            <option value="evening">Evening</option>
+            <option value="serenity">Serenity</option>
+            <option value="cool_twilight">Cool twilight</option>
+            <option value="warmth">Warmth</option>
+            <option value="crimson">Crimson</option>
+            <option value="bluescale">Bluescale</option>
+            <option value="purplescale">Purplescale</option>
+            <option value="pink_aura">Pink aura</option>
+            <option value="retroviolet">Retroviolet</option>
+          </optgroup>
+
+          <!-- Glitch / RGB Offset Filters -->
+          <optgroup label="Glitch / RGB Offset Filters">
+            <option value="offset">Offset</option>
+            <option value="offset_blue">Offset blue</option>
+            <option value="offset_green">Offset green</option>
+            <option value="extra_offset_red">Extra offset red</option>
+            <option value="extra_offset_green">Extra offset green</option>
+            <option value="extra_offset_blue">Extra offset blue</option>
+            <option value="extreme_offset_red">Extreme offset red</option>
+            <option value="extreme_offset_green">Extreme offset green</option>
+            <option value="extreme_offset_blue">Extreme offset blue</option>
+          </optgroup>
+
+          <!-- Artistic / Cinematic Tones -->
+          <optgroup label="Artistic / Cinematic Tones">
+            <option value="solange">Solange</option>
+            <option value="solange_dark">Solange dark</option>
+            <option value="solange_grey">Solange grey</option>
+            <option value="horizon">Horizon</option>
+            <option value="mellow">Mellow</option>
+            <option value="perfume">Perfume</option>
+            <option value="lemon">Lemon</option>
+            <option value="coral">Coral</option>
+            <option value="phase">Phase</option>
+            <option value="darkify">Darkify</option>
+            <option value="sat_adj">Saturation adjust</option>
+            <option value="incbrightness">Inc brightness</option>
+            <option value="incbrightness2">Inc brightness 2</option>
+          </optgroup>
+
+          <!-- Noise / Texture / Grain -->
+          <optgroup label="Noise / Texture / Grain">
+            <option value="min_noise">Min noise</option>
+            <option value="blue_min_noise">Blue min noise</option>
+            <option value="green_min_noise">Green min noise</option>
+            <option value="green_med_noise">Green med noise</option>
+            <option value="red_min_noise">Red min noise</option>
+            <option value="dark_purple_min_noise">Dark purple min noise</option>
+            <option value="pink_min_noise">Pink min noise</option>
+            <option value="specks">Specks</option>
+            <option value="specks_redscale">Specks redscale</option>
+            <option value="green_specks">Green specks</option>
+            <option value="rosetint">Rose tint</option>
+            <option value="grime">Grime</option>
+          </optgroup>
+
+          <!-- Pattern Overlays -->
+          <optgroup label="Pattern Overlays">
+            <option value="horizontal_lines">Horizontal lines</option>
+            <option value="diagonal_lines">Diagonal lines</option>
+            <option value="green_diagonal_lines">Green diagonal lines</option>
+            <option value="pane">Pane</option>
+          </optgroup>
+
+          <!-- Themed Filters -->
+          <optgroup label="Themed Filters">
+            <option value="matrix">Matrix</option>
+            <option value="matrix2">Matrix 2</option>
+            <option value="cosmic">Cosmic</option>
+            <option value="radio">Radio</option>
+            <option value="twenties">Twenties</option>
+            <option value="zapt">Zapt</option>
+            <option value="eon">Eon</option>
+            <option value="aeon">Aeon</option>
+            <option value="casino">Casino</option>
+            <option value="yellow_casino">Yellow casino</option>
+          </optgroup>
+
+          <!-- Misc -->
+          <optgroup label="Misc">
+            <option value="neue">Neue</option>
+            <option value="wood">Wood</option>
+            <option value="eclectic">Eclectic</option>
+            <option value="ryo">Ryo</option>
+            <option value="lix">Lix</option>
+            <option value="a">A</option>
+            <option value="pixel_blue">Pixel blue</option>
+            <option value="redgreyscale">Red greyscale</option>
+            <option value="greengreyscale">Green greyscale</option>
+            <option value="haze">Haze</option>
+            <option value="blues">Blues</option>
+            <option value="frontward">Frontward</option>
+            <option value="ocean">Ocean</option>
+            <option value="teal_min_noise">Teal min noise</option>
+            <option value="purple_min_noise">Purple min noise</option>
+          </optgroup>
+        </select>
+      </div>
       <video 
         id="video" 
         class="camera" 
@@ -45,6 +156,7 @@
       >
         Video stream not available.
       </video>
+      <canvas x-ref="camera" class="camera"></canvas>
     </div>
     <div x-show="!started">
       <lable>Countdown in:</lable>
@@ -222,6 +334,11 @@
       mobile: true,
       facingMode: "user",
       photoIndex: 0,
+      recorder: null,
+      chunks: [],
+      sneakCamCtx: null,
+      sneakCamCanvas: null,
+      filter: null,
 
       init() {
         this.baseAmount = Alpine.store('templateInfo').totalImages;
@@ -259,30 +376,55 @@
             const videoHeight = this.$refs.video.videoHeight;
 
             if(videoHeight > videoWidth) {
-              this.width = VIDEO_WIDTH;
-              this.height = VIDEO_HEIGHT;
-              this.isRotated = false;
-              this.$refs.video.style.transform = "none";
+              this.capturedWidth = VIDEO_WIDTH;
+              this.capturedHeight = VIDEO_HEIGHT;
             } else {
-              this.width = VIDEO_WIDTH;
-              this.height = videoHeight * (this.width / videoWidth);
-              this.isRotated = false;
-              this.$refs.video.style.transform = "none";
+              this.capturedWidth = VIDEO_WIDTH;
+              this.capturedHeight = videoHeight * (this.capturedWidth / videoWidth);
             }
-            
-            if(this.mirror) {
-              this.$refs.video.style.transform = "scaleX(-1)";
-            } else {
-              this.$refs.video.style.transform = "none";
-            }
+            this.isRotated = false;
+            this.$refs.video.style.transform = "none";
 
             Alpine.store('capturedInfo', {
-              width: this.width,
-              height: this.height,
+              width: this.capturedWidth,
+              height: this.capturedHeight,
             });
             this.streaming = true;
+            this.runCamera();
           }
         }, false);
+      },
+
+      runCamera() {
+        const fps = this.$refs.video.srcObject.getVideoTracks()[0].getSettings().frameRate;
+        const ctx = this.$refs.camera.getContext('2d', { willReadFrequently: true });
+        const cb = () => {
+          if(!this.streaming) {
+            ctx.fillStyle = "#e8e8e8";
+            ctx.fillRect(0, 0, this.$refs.camera.width, this.$refs.camera.height);
+            return;
+          }
+
+          const videoWidth = this.$refs.video.videoWidth;
+          const videoHeight = this.$refs.video.videoHeight;
+          this.$refs.camera.width = videoWidth;
+          this.$refs.camera.height = videoHeight;
+
+          if(this.mirror) {
+            ctx.save();
+            ctx.translate(videoWidth, 0);
+            ctx.scale(-1, 1);
+          }
+
+          ctx.drawImage(this.$refs.video, 0, 0, videoWidth, videoHeight);
+          if(this.filter) {
+            let imgData = ctx.getImageData(0, 0, videoWidth, videoHeight);
+            let newImgData = pixelsJS.filterImgData(imgData, this.filter);
+            ctx.putImageData(newImgData, 0, 0);
+          }
+          setTimeout(cb, 1000/fps);
+        }
+        cb();
       },
 
       closeCamera() {
@@ -297,6 +439,7 @@
       startCapture() {
         this.started = true;
         this.timer = this.countdown;
+        // this.startSneakCam();
         const interval = setInterval(async () => {
           this.timer--;
           if (this.timer === 0) {
@@ -318,6 +461,80 @@
         }, 1000);
       },
 
+      // startSneakCam() {
+      //   let ctx;
+      //   let canvas;
+      //   if(!this.recorder) {
+      //     canvas = document.createElement('canvas');
+      //     ctx = canvas.getContext('2d');
+      //     this.sneakCamCanvas = canvas;
+      //     this.sneakCamCtx = ctx;
+
+      //     const stream = canvas.captureStream(30);
+      //     this.recorder = new MediaRecorder(stream);
+      //     this.chunks = [];
+
+      //     this.recorder.ondataavailable = e => this.chunks.push(e.data);
+
+      //     this.recorder.start();
+      //   } else {
+      //     ctx = this.sneakCamCtx;
+      //     canvas = this.sneakCamCanvas;
+      //     this.recorder.resume();
+      //   }
+
+      //   const fps = 30;
+      //   const interval = 1000 / fps;
+
+      //   const draw = () => {
+      //     if (this.totalPhoto === this.toCapture) {
+      //       setTimeout(() => {
+      //         if(this.recorder.state === "recording") {
+      //           this.recorder.pause();
+      //         }
+      //       }, 1000);
+      //     }
+      //     
+      //     if(this.recorder.state !== "recording") {
+      //       return;
+      //     }
+
+      //     const videoWidth = this.$refs.video.videoWidth;
+      //     const videoHeight = this.$refs.video.videoHeight;
+
+      //     canvas.width = this.capturedWidth;
+      //     canvas.height = this.capturedHeight;
+
+      //     const videoAspectRatio = videoWidth / videoHeight;
+      //     const canvasAspectRatio = canvas.width / canvas.height;
+
+      //     let sx, sy, sWidth, sHeight;
+
+      //     if (videoAspectRatio > canvasAspectRatio) {
+      //       sHeight = videoHeight;
+      //       sWidth = sHeight * canvasAspectRatio;
+      //       sx = (videoWidth - sWidth) / 2;
+      //       sy = 0;
+      //     } else {
+      //       sWidth = videoWidth;
+      //       sHeight = sWidth / canvasAspectRatio;
+      //       sx = 0;
+      //       sy = (videoHeight - sHeight) / 2;
+      //     }
+
+      //     if(this.mirror) {
+      //       ctx.save();
+      //       ctx.translate(canvas.width, 0);
+      //       ctx.scale(-1, 1);
+      //     }
+
+      //     ctx.drawImage(this.$refs.video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+      //     setTimeout(draw, interval);
+      //   };
+
+      //   draw();
+      // },
+
       flashEffect() {
         const overlay = this.$refs.overlay;
         overlay.style.transition = null;
@@ -336,8 +553,8 @@
         const videoHeight = this.$refs.video.videoHeight;
 
         // Set the final canvas size (e.g., 500x500)
-        canvas.width = this.width;
-        canvas.height = this.height;
+        canvas.width = this.capturedWidth;
+        canvas.height = this.capturedHeight;
 
         // Calculate the best way to fill the entire canvas without stretching
         const videoAspectRatio = videoWidth / videoHeight;
@@ -359,15 +576,8 @@
           sy = (videoHeight - sHeight) / 2; // Center crop
         }
 
-        if(this.mirror) {
-          // Mirror the image horizontally
-          context.save(); // Save the current state
-          context.translate(canvas.width, 0); // Move the origin to the right
-          context.scale(-1, 1); // Flip horizontally
-        }
-
         // Draw the image with the mirrored transformation
-        context.drawImage(this.$refs.video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+        context.drawImage(this.$refs.camera, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
 
         context.restore(); // Restore to the previous state to avoid affecting other drawings
 
@@ -386,6 +596,9 @@
         this.photosData = [];
         this.toCapture = this.baseAmount;
         this.selectedCount = 0;
+        this.recorder.stop();
+        this.recorder = null;
+        this.chunks = [];
       },
 
       takeMore() {
@@ -409,6 +622,18 @@
             selectedPhotos.push(photo.image);
           }
         }
+
+        // this.recorder.onstop = () => {
+        //   const blob = new Blob(this.chunks, { type: 'video/webm' });
+        //   const url = URL.createObjectURL(blob);
+        //   const a = document.createElement('a');
+        //   a.href = url;
+        //   a.download = 'video.mp4';
+        //   a.click();
+        // };
+
+        // this.recorder.stop();
+
         Alpine.store('images', selectedPhotos);
         this.$refs.main.addEventListener("transitionend", (event) => {
           htmx.ajax('GET', './component/customize.html', {target:'main', swap:'innerHTML'})
@@ -438,6 +663,10 @@
         if(this.photosData.length <= this.baseAmount || this.selectedCount === this.baseAmount) return false;
 
         return true;
+      },
+
+      setFilter(filterName) {
+        this.filter = filterName || null;
       },
 
       flipCamera(selfie) {
