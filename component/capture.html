@@ -622,10 +622,30 @@
 
           const videoWidth = this.sourceCamera.width;
           const videoHeight = this.sourceCamera.height;
-          canvas.width = videoWidth;
-          canvas.height = videoHeight;
+          canvas.width = this.capturedWidth;
+          canvas.height = this.capturedHeight;
 
-          ctx.drawImage(this.sourceCamera, 0, 0, videoWidth, videoHeight);
+          // Calculate the best way to fill the entire canvas without stretching
+          const videoAspectRatio = videoWidth / videoHeight;
+          const canvasAspectRatio = canvas.width / canvas.height;
+
+          let sx, sy, sWidth, sHeight;
+
+          if (videoAspectRatio > canvasAspectRatio) {
+            // Video is wider than canvas -> crop width
+            sHeight = videoHeight;
+            sWidth = sHeight * canvasAspectRatio; // Maintain canvas aspect ratio
+            sx = (videoWidth - sWidth) / 2; // Center crop
+            sy = 0;
+          } else {
+            // Video is taller than canvas -> crop height
+            sWidth = videoWidth;
+            sHeight = sWidth / canvasAspectRatio; // Maintain canvas aspect ratio
+            sx = 0;
+            sy = (videoHeight - sHeight) / 2; // Center crop
+          }
+
+          ctx.drawImage(this.$refs.camera, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
           setTimeout(draw, interval);
         };
 
