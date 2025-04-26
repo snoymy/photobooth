@@ -103,7 +103,6 @@
 
 <script>
   function customizeState() {
-    const cache = {};
     const svg = Alpine.store('templateInfo').svg;
     const urls = Alpine.store('images');
     const pickr = Pickr.create({
@@ -310,11 +309,11 @@
           }
 
           let url;
-          if(cache[style]) {
-            url = cache[style];
+          if(Alpine.store('cache')[style]) {
+            url = Alpine.store('cache')[style];
           } else {
             url = await fetchImageAsDataURL(style);
-            cache[style] = url;
+            Alpine.store('cache')[style] = url;
           }
           bgStyle.style.display = "inline";
 
@@ -352,9 +351,9 @@
           promises.push(
             new Promise(async (resolve) => {
               const path = paths[key]
-              if(!cache[path]) {
+              if(!Alpine.store('cache')[path]) {
                 const url = await fetchImageAsDataURL(path);
-                cache[path] = url;
+                Alpine.store('cache')[path] = url;
               }
               resolve()
             })
@@ -371,11 +370,11 @@
 
           let url;
           const path = paths[key]
-          if(cache[path]) {
-            url = cache[path];
+          if(Alpine.store('cache')[path]) {
+            url = Alpine.store('cache')[path];
           } else {
             url = await fetchImageAsDataURL(path);
-            cache[path] = url;
+            Alpine.store('cache')[path] = url;
           }
           for(sticker of stickers.querySelectorAll("image")) {
             sticker.style.display = "inline";

@@ -7,6 +7,7 @@
   <script src="./lib/umd.js"></script>
   <script defer src="./lib/alpine3.x.x.js"></script>
   <script src="./lib/htmx2.0.4.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/silvia-odwyer/pixels.js@0.8.1/dist/Pixels.js"></script>
 
   <link rel="stylesheet" href="style.css">
 
@@ -80,6 +81,7 @@
         width: 1080,
         height: 720,
       });
+      Alpine.store('cache', {});
     });
 
     function formatTimestamp(timestamp, formatStr, timezone = getLocalOffsetString()) {
