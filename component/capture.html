@@ -406,26 +406,28 @@
             return;
           }
 
-          const videoWidth = this.$refs.video.videoWidth;
-          const videoHeight = this.$refs.video.videoHeight;
-          this.$refs.camera.width = videoWidth;
-          this.$refs.camera.height = videoHeight;
+          new Promise(() => {
+            const videoWidth = this.$refs.video.videoWidth;
+            const videoHeight = this.$refs.video.videoHeight;
+            this.$refs.camera.width = videoWidth;
+            this.$refs.camera.height = videoHeight;
 
-          if(this.mirror) {
-            ctx.save();
-            ctx.translate(videoWidth, 0);
-            ctx.scale(-1, 1);
-          }
+            if(this.mirror) {
+              ctx.save();
+              ctx.translate(videoWidth, 0);
+              ctx.scale(-1, 1);
+            }
 
-          ctx.drawImage(this.$refs.video, 0, 0, videoWidth, videoHeight);
-          if(this.selectedFilter) {
-            let imgData = ctx.getImageData(0, 0, videoWidth, videoHeight);
-            const originalConsoleLog = console.log;
-            console.log = () => {}
-            let newImgData = pixelsJS.filterImgData(imgData, this.selectedFilter);
-            console.log = originalConsoleLog;
-            ctx.putImageData(newImgData, 0, 0);
-          }
+            ctx.drawImage(this.$refs.video, 0, 0, videoWidth, videoHeight);
+            if(this.selectedFilter) {
+              let imgData = ctx.getImageData(0, 0, videoWidth, videoHeight);
+              const originalConsoleLog = console.log;
+              console.log = () => {}
+              let newImgData = pixelsJS.filterImgData(imgData, this.selectedFilter);
+              console.log = originalConsoleLog;
+              ctx.putImageData(newImgData, 0, 0);
+            }
+          });
           setTimeout(cb, 1000/fps);
         }
         cb();
