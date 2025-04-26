@@ -164,23 +164,25 @@ button + button {
   margin-bottom: 10px;
 }
 
-#effect-preview-container > div {
+#effect-preview-container div {
   display: flex;
   flex-direction: column;
   align-items: center;
   cursor: pointer;
   text-align: center;
+  width: 150px;
+  aspect-ratio: 3 / 2;
 }
 
-#effect-preview-container > div > canvas {
+#effect-preview-container div canvas {
   object-fit: cover;
 }
 
-#effect-preview-container > div > label {
+#effect-preview-container div label {
   margin-top: 5px;
 }
 
-#effect-preview-container > div + div {
+#effect-preview-container div + div {
   margin-left: 10px;
 }
 
