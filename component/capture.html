@@ -58,6 +58,7 @@
     <div 
       x-show="!started"
       id="effect-preview-container" 
+      x-ref="effectPreviewContainer"
       style="opacity: 0;"
       :class="`collapse-box ${openFilterSelector ? 'collapse-box-show' : ''}`"
     >
@@ -438,8 +439,19 @@
         const cb = () => {
           if(this.openFilterSelector) {
             const previews = document.getElementsByClassName("effect-preview");
+            const container = this.$refs.effectPreviewContainer;
             for(preview of previews) {
               new Promise(() => {
+                const containerBounding = container.getBoundingClientRect();
+                const previewBounding = preview.getBoundingClientRect();
+
+                if(
+                  previewBounding.left + previewBounding.width < containerBounding.left ||
+                  previewBounding.left >  containerBounding.left + containerBounding.width
+                ) {
+                  return;
+                }
+
                 const ctx = preview.getContext('2d', { willReadFrequently: true });
                 if(!this.streaming) {
                   ctx.fillStyle = "#e8e8e8";
