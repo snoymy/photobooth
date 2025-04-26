@@ -170,12 +170,6 @@ button + button {
   align-items: center;
   cursor: pointer;
   text-align: center;
-  width: 150px;
-  aspect-ratio: 3 / 2;
-}
-
-#effect-preview-container div canvas {
-  object-fit: cover;
 }
 
 #effect-preview-container div label {
