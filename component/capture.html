@@ -645,7 +645,7 @@
             sy = (videoHeight - sHeight) / 2; // Center crop
           }
 
-          ctx.drawImage(this.$refs.camera, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+          ctx.drawImage(this.sourceCamera, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
           setTimeout(draw, interval);
         };
 
