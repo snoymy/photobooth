@@ -137,6 +137,15 @@ button + button {
   transition: max-height 0.5s ease-in-out, opacity 0.1s linear, padding 0s linear;
 }
 
+.space-x-div div + div {
+  margin-left: 5px;
+}
+
+.space-x-div div + div::before {
+  content: "|";
+  margin-right: 5px;
+}
+
 #filter-select {
   background: rgba(255 ,255, 255, 0.7); 
   color: transparent; 

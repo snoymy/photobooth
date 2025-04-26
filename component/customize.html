@@ -20,9 +20,13 @@
           @change="setBackgroundStyle($event.target.value)"
         >
           <option value="">--None--</option>
-        <template x-for="bgStyle in $store.bgStyleList">
-          <option :value="bgStyle.path" x-text="bgStyle.name"></option>
-        </template>
+          <template x-for="bgStyle in $store.bgStyleList">
+            <optgroup :label="bgStyle.group">
+              <template x-for="style in bgStyle.styles">
+                <option :value="style.path" x-text="style.name"></option>
+              </template>
+            </optgroup>
+          </template>
         </select>
       </div>
       <div>
@@ -321,14 +325,20 @@
 
           const imageSize = await getImageSize(url)
 
+          const svgWidth = svg.getAttribute("width");
           const width = imageSize.width;
           const height = imageSize.height;
           const currentWidth = bgStyle.getAttribute("width");
           const currentHeight = bgStyle.getAttribute("height");
           const newHeight = currentHeight;
           const newWidth = currentHeight*(width/height);
+          let offsetX = 0;
+          if(newWidth > svgWidth/2) {
+            offsetX = Math.abs((newWidth - svgWidth)/4);
+          }
           bgStyle.setAttributeNS("http://www.w3.org/1999/xlink", "href", url);
           bgStyle.setAttributeNS(null, "width", newWidth);
+          bgStyle.setAttributeNS(null, "x", -offsetX);
           await this.updatePreview();
         }
         this.loadingPreview = false;
