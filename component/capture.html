@@ -432,7 +432,7 @@
       },
 
       runEffectPreview() {
-        const fps = this.$refs.video.srcObject.getVideoTracks()[0].getSettings().frameRate/2;
+        const fps = this.$refs.video.srcObject.getVideoTracks()[0].getSettings().frameRate;
         const cb = () => {
           if(this.openFilterSelector) {
             const previews = document.getElementsByClassName("effect-preview");
