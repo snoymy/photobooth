@@ -127,14 +127,14 @@ button + button {
   border-radius: 10px;
   max-height: 0px;
   overflow-y: hidden;
-  transition: max-height 0.5s ease-in-out, opacity 0s linear 0.5s, padding 0s linear 0.5s;
+  transition: max-height 0.5s ease-in-out, opacity 0.1s linear 0.4s, padding 0s linear 0.5s;
 }
 
 .collapse-box-show {
   max-height: 100vh;
   opacity: 100% !important;
   padding: 10px; 
-  transition: max-height 0.5s ease-in-out, opacity 0s linear, padding 0s linear;
+  transition: max-height 0.5s ease-in-out, opacity 0.1s linear, padding 0s linear;
 }
 
 #filter-select {
@@ -154,6 +154,30 @@ button + button {
 #filter-select:hover {
   cursor: pointer;
   transform: scale(1.05);
+}
+
+#effect-preview-container {
+  display: flex;
+  width: 90%;
+  max-width: 1080px;
+  overflow-x: auto;
+  margin-bottom: 10px;
+}
+
+#effect-preview-container > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  text-align: center;
+}
+
+#effect-preview-container > div > label {
+  margin-top: 5px;
+}
+
+#effect-preview-container > div + div {
+  margin-left: 10px;
 }
 
 #video-overlay {

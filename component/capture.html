@@ -35,115 +35,12 @@
         </button>
       </div>
       <div x-show="!started" style="position: absolute; bottom: 2%; left: 2%; z-index: 2">
-        <select 
-          id="filter-select"
-          @change="setFilter($event.target.value)"
+        <button
+          @click="openFilterSelector = !openFilterSelector"
+          style="background: rgba(255 ,255, 255, 0.7); width: 50px; height: 50px;"
         >
-          <!-- Common & Essential Filters -->
-          <option value="">Normal</option>
-          <optgroup label="Common & Essential Filters">
-            <option value="greyscale">Greyscale</option>
-            <option value="invert">Invert</option>
-            <option value="vintage">Vintage</option>
-            <option value="sunset">Sunset</option>
-            <option value="evening">Evening</option>
-            <option value="serenity">Serenity</option>
-            <option value="cool_twilight">Cool twilight</option>
-            <option value="warmth">Warmth</option>
-            <option value="crimson">Crimson</option>
-            <option value="bluescale">Bluescale</option>
-            <option value="purplescale">Purplescale</option>
-            <option value="pink_aura">Pink aura</option>
-            <option value="retroviolet">Retroviolet</option>
-          </optgroup>
-
-          <!-- Glitch / RGB Offset Filters -->
-          <optgroup label="Glitch / RGB Offset Filters">
-            <option value="offset">Offset</option>
-            <option value="offset_blue">Offset blue</option>
-            <option value="offset_green">Offset green</option>
-            <option value="extra_offset_red">Extra offset red</option>
-            <option value="extra_offset_green">Extra offset green</option>
-            <option value="extra_offset_blue">Extra offset blue</option>
-            <option value="extreme_offset_red">Extreme offset red</option>
-            <option value="extreme_offset_green">Extreme offset green</option>
-            <option value="extreme_offset_blue">Extreme offset blue</option>
-          </optgroup>
-
-          <!-- Artistic / Cinematic Tones -->
-          <optgroup label="Artistic / Cinematic Tones">
-            <option value="solange">Solange</option>
-            <option value="solange_dark">Solange dark</option>
-            <option value="solange_grey">Solange grey</option>
-            <option value="horizon">Horizon</option>
-            <option value="mellow">Mellow</option>
-            <option value="perfume">Perfume</option>
-            <option value="lemon">Lemon</option>
-            <option value="coral">Coral</option>
-            <option value="phase">Phase</option>
-            <option value="darkify">Darkify</option>
-            <option value="sat_adj">Saturation adjust</option>
-            <option value="incbrightness">Inc brightness</option>
-            <option value="incbrightness2">Inc brightness 2</option>
-          </optgroup>
-
-          <!-- Noise / Texture / Grain -->
-          <optgroup label="Noise / Texture / Grain">
-            <option value="min_noise">Min noise</option>
-            <option value="blue_min_noise">Blue min noise</option>
-            <option value="green_min_noise">Green min noise</option>
-            <option value="green_med_noise">Green med noise</option>
-            <option value="red_min_noise">Red min noise</option>
-            <option value="dark_purple_min_noise">Dark purple min noise</option>
-            <option value="pink_min_noise">Pink min noise</option>
-            <option value="specks">Specks</option>
-            <option value="specks_redscale">Specks redscale</option>
-            <option value="green_specks">Green specks</option>
-            <option value="rosetint">Rose tint</option>
-            <option value="grime">Grime</option>
-          </optgroup>
-
-          <!-- Pattern Overlays -->
-          <optgroup label="Pattern Overlays">
-            <option value="horizontal_lines">Horizontal lines</option>
-            <option value="diagonal_lines">Diagonal lines</option>
-            <option value="green_diagonal_lines">Green diagonal lines</option>
-            <option value="pane">Pane</option>
-          </optgroup>
-
-          <!-- Themed Filters -->
-          <optgroup label="Themed Filters">
-            <option value="matrix">Matrix</option>
-            <option value="matrix2">Matrix 2</option>
-            <option value="cosmic">Cosmic</option>
-            <option value="radio">Radio</option>
-            <option value="twenties">Twenties</option>
-            <option value="zapt">Zapt</option>
-            <option value="eon">Eon</option>
-            <option value="aeon">Aeon</option>
-            <option value="casino">Casino</option>
-            <option value="yellow_casino">Yellow casino</option>
-          </optgroup>
-
-          <!-- Misc -->
-          <optgroup label="Misc">
-            <option value="neue">Neue</option>
-            <option value="wood">Wood</option>
-            <option value="eclectic">Eclectic</option>
-            <option value="ryo">Ryo</option>
-            <option value="lix">Lix</option>
-            <option value="a">A</option>
-            <option value="pixel_blue">Pixel blue</option>
-            <option value="redgreyscale">Red greyscale</option>
-            <option value="greengreyscale">Green greyscale</option>
-            <option value="haze">Haze</option>
-            <option value="blues">Blues</option>
-            <option value="frontward">Frontward</option>
-            <option value="ocean">Ocean</option>
-            <option value="teal_min_noise">Teal min noise</option>
-            <option value="purple_min_noise">Purple min noise</option>
-          </optgroup>
-        </select>
+          <img src="./public/assets/filter.svg" :style="`max-width: 100%; max-height: 100%;`"/>
+        </button>
       </div>
       <video 
         id="video" 
@@ -157,6 +54,22 @@
         Video stream not available.
       </video>
       <canvas x-ref="camera" class="camera"></canvas>
+    </div>
+    <div 
+      x-show="!started"
+      id="effect-preview-container" 
+      style="opacity: 0;"
+      :class="`collapse-box ${openFilterSelector ? 'collapse-box-show' : ''}`"
+    >
+      <template x-for="filter in filters">
+        <div 
+          @click="setFilter(filter.value)"
+          :style="(selectedFilter === filter.value) ? 'border: 5px solid var(--primary); border-radius: 10px;':'border-radius: 10px; padding: 5px;'" 
+        >
+          <canvas class="effect-preview" width="150" :data-filter="filter.value"></canvas>
+          <label x-text="filter.label"></label>
+        </div>
+      </template>
     </div>
     <div x-show="!started">
       <lable>Countdown in:</lable>
@@ -338,7 +251,87 @@
       chunks: [],
       sneakCamCtx: null,
       sneakCamCanvas: null,
-      filter: null,
+      selectedFilter: null,
+      openFilterSelector: false,
+      filters: [
+        { value: null, label: "Normal" },
+        { value: "greyscale", label: "Greyscale" },
+        { value: "invert", label: "Invert" },
+        { value: "vintage", label: "Vintage" },
+        { value: "sunset", label: "Sunset" },
+        { value: "evening", label: "Evening" },
+        { value: "serenity", label: "Serenity" },
+        { value: "cool_twilight", label: "Cool Twilight" },
+        { value: "warmth", label: "Warmth" },
+        { value: "crimson", label: "Crimson" },
+        { value: "bluescale", label: "Bluescale" },
+        { value: "purplescale", label: "Purplescale" },
+        { value: "pink_aura", label: "Pink Aura" },
+        { value: "retroviolet", label: "Retro Violet" },
+        { value: "offset", label: "Offset" },
+        { value: "offset_blue", label: "Offset Blue" },
+        { value: "offset_green", label: "Offset Green" },
+        { value: "extra_offset_red", label: "Extra Offset Red" },
+        { value: "extra_offset_green", label: "Extra Offset Green" },
+        { value: "extra_offset_blue", label: "Extra Offset Blue" },
+        { value: "extreme_offset_red", label: "Extreme Offset Red" },
+        { value: "extreme_offset_green", label: "Extreme Offset Green" },
+        { value: "extreme_offset_blue", label: "Extreme Offset Blue" },
+        { value: "solange", label: "Solange" },
+        { value: "solange_dark", label: "Solange Dark" },
+        { value: "solange_grey", label: "Solange Grey" },
+        { value: "horizon", label: "Horizon" },
+        { value: "mellow", label: "Mellow" },
+        { value: "perfume", label: "Perfume" },
+        { value: "lemon", label: "Lemon" },
+        { value: "coral", label: "Coral" },
+        { value: "phase", label: "Phase" },
+        { value: "darkify", label: "Darkify" },
+        { value: "sat_adj", label: "Saturation Adjust" },
+        { value: "incbrightness", label: "Increase Brightness" },
+        { value: "incbrightness2", label: "Increase Brightness 2" },
+        { value: "min_noise", label: "Min Noise" },
+        { value: "blue_min_noise", label: "Blue Min Noise" },
+        { value: "green_min_noise", label: "Green Min Noise" },
+        { value: "green_med_noise", label: "Green Medium Noise" },
+        { value: "red_min_noise", label: "Red Min Noise" },
+        { value: "dark_purple_min_noise", label: "Dark Purple Min Noise" },
+        { value: "pink_min_noise", label: "Pink Min Noise" },
+        { value: "specks", label: "Specks" },
+        { value: "specks_redscale", label: "Specks Redscale" },
+        { value: "green_specks", label: "Green Specks" },
+        { value: "rosetint", label: "Rose Tint" },
+        { value: "grime", label: "Grime" },
+        { value: "horizontal_lines", label: "Horizontal Lines" },
+        { value: "diagonal_lines", label: "Diagonal Lines" },
+        { value: "green_diagonal_lines", label: "Green Diagonal Lines" },
+        { value: "pane", label: "Pane" },
+        { value: "matrix", label: "Matrix" },
+        { value: "matrix2", label: "Matrix 2" },
+        { value: "cosmic", label: "Cosmic" },
+        { value: "radio", label: "Radio" },
+        { value: "twenties", label: "Twenties" },
+        { value: "zapt", label: "Zapt" },
+        { value: "eon", label: "Eon" },
+        { value: "aeon", label: "Aeon" },
+        { value: "casino", label: "Casino" },
+        { value: "yellow_casino", label: "Yellow Casino" },
+        { value: "neue", label: "Neue" },
+        { value: "wood", label: "Wood" },
+        { value: "eclectic", label: "Eclectic" },
+        { value: "ryo", label: "Ryo" },
+        { value: "lix", label: "Lix" },
+        { value: "a", label: "A" },
+        { value: "pixel_blue", label: "Pixel Blue" },
+        { value: "redgreyscale", label: "Red Greyscale" },
+        { value: "greengreyscale", label: "Green Greyscale" },
+        { value: "haze", label: "Haze" },
+        { value: "blues", label: "Blues" },
+        { value: "frontward", label: "Frontward" },
+        { value: "ocean", label: "Ocean" },
+        { value: "teal_min_noise", label: "Teal Min Noise" },
+        { value: "purple_min_noise", label: "Purple Min Noise" },
+      ],
 
       init() {
         this.baseAmount = Alpine.store('templateInfo').totalImages;
@@ -391,6 +384,7 @@
             });
             this.streaming = true;
             this.runCamera();
+            this.runEffectPreview()
           }
         }, false);
       },
@@ -417,10 +411,53 @@
           }
 
           ctx.drawImage(this.$refs.video, 0, 0, videoWidth, videoHeight);
-          if(this.filter) {
+          if(this.selectedFilter) {
             let imgData = ctx.getImageData(0, 0, videoWidth, videoHeight);
-            let newImgData = pixelsJS.filterImgData(imgData, this.filter);
+            const originalConsoleLog = console.log;
+            console.log = () => {}
+            let newImgData = pixelsJS.filterImgData(imgData, this.selectedFilter);
+            console.log = originalConsoleLog;
             ctx.putImageData(newImgData, 0, 0);
+          }
+          setTimeout(cb, 1000/fps);
+        }
+        cb();
+      },
+
+      runEffectPreview() {
+        const fps = this.$refs.video.srcObject.getVideoTracks()[0].getSettings().frameRate/2;
+        const cb = () => {
+          const previews = document.getElementsByClassName("effect-preview");
+          for(preview of previews) {
+            const ctx = preview.getContext('2d', { willReadFrequently: true });
+            if(!this.streaming) {
+              ctx.fillStyle = "#e8e8e8";
+              ctx.fillRect(0, 0, preview.width, preview.height);
+              return;
+            }
+
+            const videoWidth = preview.width;
+            const videoHeight = this.$refs.video.videoHeight * (preview.width / this.$refs.video.videoWidth);
+            preview.width = videoWidth;
+            preview.height = videoHeight;
+
+            if(this.mirror) {
+              ctx.save();
+              ctx.translate(videoWidth, 0);
+              ctx.scale(-1, 1);
+            }
+
+            ctx.drawImage(this.$refs.video, 0, 0, videoWidth, videoHeight);
+
+            const filter = preview.getAttribute("data-filter");
+            if(filter) {
+              let imgData = ctx.getImageData(0, 0, videoWidth, videoHeight);
+              const originalConsoleLog = console.log;
+              console.log = () => {}
+              let newImgData = pixelsJS.filterImgData(imgData, filter);
+              console.log = originalConsoleLog;
+              ctx.putImageData(newImgData, 0, 0);
+            }
           }
           setTimeout(cb, 1000/fps);
         }
@@ -591,12 +628,12 @@
 
         this.started = false;
         this.totalPhoto = 0;
-        this.streaming = false;
+        //this.streaming = false;
         this.canvas = null;
         this.photosData = [];
         this.toCapture = this.baseAmount;
         this.selectedCount = 0;
-        this.recorder.stop();
+        this.recorder && this.recorder.stop();
         this.recorder = null;
         this.chunks = [];
       },
@@ -666,7 +703,7 @@
       },
 
       setFilter(filterName) {
-        this.filter = filterName || null;
+        this.selectedFilter = filterName || null;
       },
 
       flipCamera(selfie) {
