@@ -427,36 +427,38 @@
       runEffectPreview() {
         const fps = this.$refs.video.srcObject.getVideoTracks()[0].getSettings().frameRate/2;
         const cb = () => {
-          const previews = document.getElementsByClassName("effect-preview");
-          for(preview of previews) {
-            const ctx = preview.getContext('2d', { willReadFrequently: true });
-            if(!this.streaming) {
-              ctx.fillStyle = "#e8e8e8";
-              ctx.fillRect(0, 0, preview.width, preview.height);
-              return;
-            }
+          if(this.openFilterSelector) {
+            const previews = document.getElementsByClassName("effect-preview");
+            for(preview of previews) {
+              const ctx = preview.getContext('2d', { willReadFrequently: true });
+              if(!this.streaming) {
+                ctx.fillStyle = "#e8e8e8";
+                ctx.fillRect(0, 0, preview.width, preview.height);
+                return;
+              }
 
-            const videoWidth = preview.width;
-            const videoHeight = this.$refs.video.videoHeight * (preview.width / this.$refs.video.videoWidth);
-            preview.width = videoWidth;
-            preview.height = videoHeight;
+              const videoWidth = preview.width;
+              const videoHeight = this.$refs.video.videoHeight * (preview.width / this.$refs.video.videoWidth);
+              preview.width = videoWidth;
+              preview.height = videoHeight;
 
-            if(this.mirror) {
-              ctx.save();
-              ctx.translate(videoWidth, 0);
-              ctx.scale(-1, 1);
-            }
+              if(this.mirror) {
+                ctx.save();
+                ctx.translate(videoWidth, 0);
+                ctx.scale(-1, 1);
+              }
 
-            ctx.drawImage(this.$refs.video, 0, 0, videoWidth, videoHeight);
+              ctx.drawImage(this.$refs.video, 0, 0, videoWidth, videoHeight);
 
-            const filter = preview.getAttribute("data-filter");
-            if(filter) {
-              let imgData = ctx.getImageData(0, 0, videoWidth, videoHeight);
-              const originalConsoleLog = console.log;
-              console.log = () => {}
-              let newImgData = pixelsJS.filterImgData(imgData, filter);
-              console.log = originalConsoleLog;
-              ctx.putImageData(newImgData, 0, 0);
+              const filter = preview.getAttribute("data-filter");
+              if(filter) {
+                let imgData = ctx.getImageData(0, 0, videoWidth, videoHeight);
+                const originalConsoleLog = console.log;
+                console.log = () => {}
+                let newImgData = pixelsJS.filterImgData(imgData, filter);
+                console.log = originalConsoleLog;
+                ctx.putImageData(newImgData, 0, 0);
+              }
             }
           }
           setTimeout(cb, 1000/fps);

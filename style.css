@@ -172,6 +172,10 @@ button + button {
   text-align: center;
 }
 
+#effect-preview-container > div > canvas {
+  object-fit: cover;
+}
+
 #effect-preview-container > div > label {
   margin-top: 5px;
 }
