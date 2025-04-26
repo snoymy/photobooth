@@ -11,7 +11,7 @@
 </head>
 <body class="container-center" x-data="sneakVideoState()">
   <h1>See Your Moment!</h1>
-  <video x-data :src="url" controls>video not available.</video> 
+  <video x-data :src="url" style="width: 80%; max-width: 1080px; height: auto;" controls>video not available.</video> 
   <button 
     id="download-button" 
     @click="download()"
