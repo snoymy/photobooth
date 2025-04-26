@@ -85,13 +85,21 @@
       <img id="previewer" :src="preview"/>
     </div>
   </div>
-  <div style="padding: 10px 0 10px 0;">
+  <div style="padding: 10px 0 10px 0; justify-content: center;">
     <button 
       id="download-button" 
       @click="downloadImage()"
-      style="width: 100px; height: 50px;"
+      style="height: 50px;"
     >
-      Download!
+      Download Photo!
+    </button>
+    <button 
+      class="outline"
+      id="download-button" 
+      @click="viewSneakVideo()"
+      style="height: 50px;"
+    >
+      View Sneak Video! ↗️
     </button>
   </div>
   <div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center;">
@@ -468,6 +476,11 @@
         a.href = uri;
         a.download = `photobooth_${getFormattedDate()}.png`;
         a.click();
+      },
+
+      viewSneakVideo() {
+        const url = Alpine.store('sneakVideo');
+        window.open(`sneak-video.html?video=${url}`, "_blank").focus();
       },
 
       onRestart() {

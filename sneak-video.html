@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhotoBooth</title>
+  <script defer src="./lib/alpine3.x.x.js"></script>
+  <script src="./lib/htmx2.0.4.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="container-center" x-data="sneakVideoState()">
+  <h1>See Your Moment!</h1>
+  <video x-data :src="url" controls>video not available.</video> 
+  <button 
+    id="download-button" 
+    @click="download()"
+    style="height: 50px; margin: 20px 0;"
+  >
+    Download Video!
+  </button>
+  <script>
+    function sneakVideoState() {
+      const getFormattedDate = () => {
+        const now = new Date();
+        
+        const pad = (num) => String(num).padStart(2, '0');
+
+        const year = now.getFullYear();
+        const month = pad(now.getMonth() + 1); // Months are 0-based
+        const day = pad(now.getDate());
+        const hours = pad(now.getHours());
+        const minutes = pad(now.getMinutes());
+        const seconds = pad(now.getSeconds());
+
+        return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+      }
+      return {
+        url: "",
+
+        init() {
+          const params = new URLSearchParams(window.location.search);
+          this.url = params.get("video");
+        },
+
+        download() {
+          const a = document.createElement('a');
+          a.href = this.url;
+          a.download = `photobooth_${getFormattedDate()}.webm`;
+          a.click();
+        },
+      }
+    }
+  </script>
+</body>
+</html>
+
+
+

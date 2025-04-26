@@ -78,6 +78,8 @@ button:hover {
 button:disabled {
   background-color: #d8d8d8;
   cursor: not-allowed;
+  transition: none;
+  transform: none;
 }
 
 button + button {

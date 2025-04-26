@@ -110,6 +110,7 @@
         id="start-button" 
         @click="startCapture()" 
         style="width: 100px"
+        :disabled="!cameraReady"
       >
         📸 Start!
       </button>
@@ -126,8 +127,9 @@
         <option value="10">10 pictures</option>
       </select>
       <button 
-          id="restart-button" 
-          @click="startMore($refs.moreAmount.value)" 
+        id="restart-button" 
+        @click="startMore($refs.moreAmount.value)" 
+        :disabled="!cameraReady"
       >
         Take more!
       </button>
@@ -237,6 +239,7 @@
     };
 
     return {
+      cameraReady: false,
       started: false,
       countdown: 3,
       timer: 3,
@@ -261,6 +264,7 @@
       sneakCamCanvas: null,
       selectedFilter: null,
       openFilterSelector: false,
+      sourceCamera: null,
       filters: [
         { value: null, label: "Normal" },
         // ----- Vintage / Retro Filters -----
@@ -362,7 +366,8 @@
         { value: "a", label: "A" },
       ],
 
-      init() {
+      async init() {
+        this.cameraReady = false;
         this.baseAmount = Alpine.store('templateInfo').totalImages;
         this.toCapture = this.baseAmount;
         this.mirror = true;
@@ -374,65 +379,74 @@
           this.mobile = false;
         }
 
-        this.openCamera();
         this.$refs.main.classList.remove("fade-hide");
+        await this.openCamera();
+        this.cameraReady = true;
       },
       
       openCamera(facingMode) {
-        navigator.mediaDevices
-        .getUserMedia({ 
-          video: this.mobile ? { facingMode: this.facingMode, } : true, 
-          audio: false ,
-        })
-        .then((stream) => {
-          this.$refs.video.srcObject = stream;
-          this.$refs.video.play();
-        })
-        .catch((err) => {
-          console.error(`An error occurred: ${err}`);
-        });
+        return new Promise((resolve, reject) => {
+          navigator.mediaDevices
+          .getUserMedia({ 
+            video: this.mobile ? { facingMode: this.facingMode, } : true, 
+            audio: false ,
+          })
+          .then((stream) => {
+            this.$refs.video.srcObject = stream;
+            this.$refs.video.play();
+          })
+          .catch((err) => {
+            console.error(`An error occurred: ${err}`);
+          });
 
-        this.$refs.video.addEventListener("canplay", () => {
-          if (!this.streaming) {
-            const videoWidth = this.$refs.video.videoWidth;
-            const videoHeight = this.$refs.video.videoHeight;
+          this.$refs.video.addEventListener("canplay", () => {
+            if (!this.streaming) {
+              const videoWidth = this.$refs.video.videoWidth;
+              const videoHeight = this.$refs.video.videoHeight;
 
-            if(videoHeight > videoWidth) {
-              this.capturedWidth = VIDEO_WIDTH;
-              this.capturedHeight = VIDEO_HEIGHT;
-            } else {
-              this.capturedWidth = VIDEO_WIDTH;
-              this.capturedHeight = videoHeight * (this.capturedWidth / videoWidth);
+              if(videoHeight > videoWidth) {
+                this.capturedWidth = VIDEO_WIDTH;
+                this.capturedHeight = VIDEO_HEIGHT;
+              } else {
+                this.capturedWidth = VIDEO_WIDTH;
+                this.capturedHeight = videoHeight * (this.capturedWidth / videoWidth);
+              }
+              this.isRotated = false;
+              this.$refs.video.style.transform = "none";
+
+              this.sourceCamera = document.createElement("canvas");
+
+              Alpine.store('capturedInfo', {
+                width: this.capturedWidth,
+                height: this.capturedHeight,
+              });
+              this.streaming = true;
+              this.runSourceCamera();
+              this.updateCamera();
+              this.updateEffectPreview();
             }
-            this.isRotated = false;
-            this.$refs.video.style.transform = "none";
-
-            Alpine.store('capturedInfo', {
-              width: this.capturedWidth,
-              height: this.capturedHeight,
-            });
-            this.streaming = true;
-            this.runCamera();
-            this.runEffectPreview()
-          }
-        }, false);
+            resolve();
+          }, false);
+        })
       },
 
-      runCamera() {
-        const fps = this.$refs.video.srcObject.getVideoTracks()[0].getSettings().frameRate;
-        const ctx = this.$refs.camera.getContext('2d', { willReadFrequently: true });
+      runSourceCamera() {
+        const video = this.$refs.video; 
+        const fps = video.srcObject.getVideoTracks()[0].getSettings().frameRate;
+        const ctx = this.sourceCamera.getContext('2d', { willReadFrequently: true });
+        this.sourceCamera.fps = fps;
         const cb = () => {
           if(!this.streaming) {
             ctx.fillStyle = "#e8e8e8";
-            ctx.fillRect(0, 0, this.$refs.camera.width, this.$refs.camera.height);
+            ctx.fillRect(0, 0, this.sourceCamera.width, this.sourceCamera.height);
             return;
           }
 
           new Promise(() => {
-            const videoWidth = this.$refs.video.videoWidth;
-            const videoHeight = this.$refs.video.videoHeight;
-            this.$refs.camera.width = videoWidth;
-            this.$refs.camera.height = videoHeight;
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            this.sourceCamera.width = videoWidth;
+            this.sourceCamera.height = videoHeight;
 
             if(this.mirror) {
               ctx.save();
@@ -440,7 +454,29 @@
               ctx.scale(-1, 1);
             }
 
-            ctx.drawImage(this.$refs.video, 0, 0, videoWidth, videoHeight);
+            ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+          });
+          setTimeout(cb, 1000/fps);
+        }
+        cb();
+      },
+
+      updateCamera() {
+        const camera = this.$refs.camera;
+        const fps = this.sourceCamera.fps;
+        const ctx = camera.getContext('2d', { willReadFrequently: true });
+        const cb = () => {
+          if(!this.streaming) {
+            return;
+          }
+
+          new Promise(() => {
+            const videoWidth = this.sourceCamera.width;
+            const videoHeight = this.sourceCamera.height;
+            camera.width = videoWidth;
+            camera.height = videoHeight;
+
+            ctx.drawImage(this.sourceCamera, 0, 0, videoWidth, videoHeight);
             if(this.selectedFilter) {
               let imgData = ctx.getImageData(0, 0, videoWidth, videoHeight);
               const originalConsoleLog = console.log;
@@ -455,10 +491,14 @@
         cb();
       },
 
-      runEffectPreview() {
-        const fps = this.$refs.video.srcObject.getVideoTracks()[0].getSettings().frameRate;
+      updateEffectPreview() {
+        const fps = this.sourceCamera.fps;
         const cb = () => {
           if(this.openFilterSelector) {
+            if(!this.streaming) {
+              return;
+            }
+
             const previews = document.getElementsByClassName("effect-preview");
             const container = this.$refs.effectPreviewContainer;
             for(preview of previews) {
@@ -474,24 +514,13 @@
                 }
 
                 const ctx = preview.getContext('2d', { willReadFrequently: true });
-                if(!this.streaming) {
-                  ctx.fillStyle = "#e8e8e8";
-                  ctx.fillRect(0, 0, preview.width, preview.height);
-                  return;
-                }
 
                 const videoWidth = preview.width;
-                const videoHeight = this.$refs.video.videoHeight * (preview.width / this.$refs.video.videoWidth);
+                const videoHeight = this.sourceCamera.height * (preview.width / this.sourceCamera.width);
                 preview.width = videoWidth;
                 preview.height = videoHeight;
 
-                if(this.mirror) {
-                  ctx.save();
-                  ctx.translate(videoWidth, 0);
-                  ctx.scale(-1, 1);
-                }
-
-                ctx.drawImage(this.$refs.video, 0, 0, videoWidth, videoHeight);
+                ctx.drawImage(this.sourceCamera, 0, 0, videoWidth, videoHeight);
 
                 const filter = preview.getAttribute("data-filter");
                 if(filter) {
@@ -523,7 +552,7 @@
         this.started = true;
         this.openFilterSelector = false;
         this.timer = this.countdown;
-        // this.startSneakCam();
+        this.startSneakCam();
         const interval = setInterval(async () => {
           this.timer--;
           if (this.timer === 0) {
@@ -545,79 +574,63 @@
         }, 1000);
       },
 
-      // startSneakCam() {
-      //   let ctx;
-      //   let canvas;
-      //   if(!this.recorder) {
-      //     canvas = document.createElement('canvas');
-      //     ctx = canvas.getContext('2d');
-      //     this.sneakCamCanvas = canvas;
-      //     this.sneakCamCtx = ctx;
+      startSneakCam() {
+        let ctx;
+        let canvas;
+        if(!this.recorder) {
+          canvas = document.createElement('canvas');
+          ctx = canvas.getContext('2d');
+          this.sneakCamCanvas = canvas;
+          this.sneakCamCtx = ctx;
 
-      //     const stream = canvas.captureStream(30);
-      //     this.recorder = new MediaRecorder(stream);
-      //     this.chunks = [];
+          const stream = canvas.captureStream(30);
+          this.recorder = new MediaRecorder(stream);
+          this.chunks = [];
 
-      //     this.recorder.ondataavailable = e => this.chunks.push(e.data);
+          this.recorder.ondataavailable = e => this.chunks.push(e.data);
 
-      //     this.recorder.start();
-      //   } else {
-      //     ctx = this.sneakCamCtx;
-      //     canvas = this.sneakCamCanvas;
-      //     this.recorder.resume();
-      //   }
+          this.recorder.start();
+        } else {
+          ctx = this.sneakCamCtx;
+          canvas = this.sneakCamCanvas;
+          this.recorder.resume();
+        }
 
-      //   const fps = 30;
-      //   const interval = 1000 / fps;
+        const fps = this.sourceCamera.fps;
+        const interval = 1000 / fps;
 
-      //   const draw = () => {
-      //     if (this.totalPhoto === this.toCapture) {
-      //       setTimeout(() => {
-      //         if(this.recorder.state === "recording") {
-      //           this.recorder.pause();
-      //         }
-      //       }, 1000);
-      //     }
-      //     
-      //     if(this.recorder.state !== "recording") {
-      //       return;
-      //     }
+        const draw = () => {
+          if (this.totalPhoto === this.toCapture) {
+            setTimeout(() => {
+              if(!this.recorder) {
+                return;
+              }
+          
+              if(this.recorder.state === "recording") {
+                this.recorder.pause();
+              }
+            }, 1000);
+          }
 
-      //     const videoWidth = this.$refs.video.videoWidth;
-      //     const videoHeight = this.$refs.video.videoHeight;
+          if(!this.recorder) {
+            return;
+          }
+          
+          if(this.recorder.state !== "recording") {
+            return;
+          }
 
-      //     canvas.width = this.capturedWidth;
-      //     canvas.height = this.capturedHeight;
+          const videoWidth = this.sourceCamera.width;
+          const videoHeight = this.sourceCamera.height;
+          canvas.width = videoWidth;
+          canvas.height = videoHeight;
 
-      //     const videoAspectRatio = videoWidth / videoHeight;
-      //     const canvasAspectRatio = canvas.width / canvas.height;
+          ctx.drawImage(this.sourceCamera, 0, 0, videoWidth, videoHeight);
+          setTimeout(draw, interval);
+        };
 
-      //     let sx, sy, sWidth, sHeight;
-
-      //     if (videoAspectRatio > canvasAspectRatio) {
-      //       sHeight = videoHeight;
-      //       sWidth = sHeight * canvasAspectRatio;
-      //       sx = (videoWidth - sWidth) / 2;
-      //       sy = 0;
-      //     } else {
-      //       sWidth = videoWidth;
-      //       sHeight = sWidth / canvasAspectRatio;
-      //       sx = 0;
-      //       sy = (videoHeight - sHeight) / 2;
-      //     }
-
-      //     if(this.mirror) {
-      //       ctx.save();
-      //       ctx.translate(canvas.width, 0);
-      //       ctx.scale(-1, 1);
-      //     }
-
-      //     ctx.drawImage(this.$refs.video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
-      //     setTimeout(draw, interval);
-      //   };
-
-      //   draw();
-      // },
+        draw();
+      },
 
       flashEffect() {
         const overlay = this.$refs.overlay;
@@ -675,7 +688,6 @@
 
         this.started = false;
         this.totalPhoto = 0;
-        //this.streaming = false;
         this.canvas = null;
         this.photosData = [];
         this.toCapture = this.baseAmount;
@@ -707,16 +719,13 @@
           }
         }
 
-        // this.recorder.onstop = () => {
-        //   const blob = new Blob(this.chunks, { type: 'video/webm' });
-        //   const url = URL.createObjectURL(blob);
-        //   const a = document.createElement('a');
-        //   a.href = url;
-        //   a.download = 'video.mp4';
-        //   a.click();
-        // };
+        this.recorder.onstop = () => {
+          const blob = new Blob(this.chunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          Alpine.store('sneakVideo', url);
+        };
 
-        // this.recorder.stop();
+        this.recorder.stop();
 
         Alpine.store('images', selectedPhotos);
         this.$refs.main.addEventListener("transitionend", (event) => {
@@ -753,26 +762,28 @@
         this.selectedFilter = filterName || null;
       },
 
-      flipCamera(selfie) {
+      async flipCamera(selfie) {
+        this.cameraReady = false;
         if(selfie) {
           this.mirror = true;
           this.facingMode = "user";
-          this.closeCamera();
-          this.openCamera();
         } else {
           this.mirror = false;
           this.facingMode = "environment";
-          this.closeCamera();
-          this.openCamera();
         }
+        this.closeCamera();
+        await this.openCamera();
+        this.cameraReady = true;
       },
 
-      mirrorCamera(mirror) {
+      async mirrorCamera(mirror) {
+        this.cameraReady = false;
         if(this.mirror !== mirror) {
           this.mirror = mirror;
           this.closeCamera();
-          this.openCamera();
+          await this.openCamera();
         }
+        this.cameraReady = true;
       },
     };
   }
