@@ -486,6 +486,7 @@
 
       startCapture() {
         this.started = true;
+        this.openFilterSelector = false;
         this.timer = this.countdown;
         // this.startSneakCam();
         const interval = setInterval(async () => {
