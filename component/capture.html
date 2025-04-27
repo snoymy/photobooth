@@ -590,7 +590,7 @@
           } else if (MediaRecorder.isTypeSupported('video/webm')) {
             options = {mimeType: 'video/webm'};
           } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-            options = {mimeType: 'video/mp4', videoBitsPerSecond : 100000};
+            options = {mimeType: 'video/mp4'};
           } else {
             console.error("no suitable mimetype found for this device");
           }
