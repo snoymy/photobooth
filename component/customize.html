@@ -479,8 +479,8 @@
       },
 
       viewSneakVideo() {
-        const url = Alpine.store('sneakVideo');
-        window.open(`sneak-video.html?video=${url}`, "_blank").focus();
+        const sneakVideo = Alpine.store('sneakVideo');
+        window.open(`sneak-video.html?video=${sneakVideo.url}&type=${sneakVideo.mimeType}`, "_blank").focus();
       },
 
       onRestart() {

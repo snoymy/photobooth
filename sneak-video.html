@@ -36,17 +36,25 @@
         return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
       }
       return {
-        url: "",
+        url: "", mimeType: "",
 
         init() {
           const params = new URLSearchParams(window.location.search);
           this.url = params.get("video");
+          this.mimeType= params.get("type");
         },
 
         download() {
+          let fileType = "";
+          if(this.mimeType.includes("video/mp4")) {
+            fileType = "mp4";
+          } else {
+            fileType = "webm";
+          }
+
           const a = document.createElement('a');
           a.href = this.url;
-          a.download = `photobooth_${getFormattedDate()}.webm`;
+          a.download = `photobooth_${getFormattedDate()}.${fileType}`;
           a.click();
         },
       }
