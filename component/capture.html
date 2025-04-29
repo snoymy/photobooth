@@ -577,13 +577,14 @@
       startSneakCam() {
         let ctx;
         let canvas;
+        const fps = this.sourceCamera.fps;
+
         if(!this.recorder) {
           canvas = document.createElement('canvas');
           ctx = canvas.getContext('2d');
           this.sneakCamCanvas = canvas;
           this.sneakCamCtx = ctx;
 
-          const fps = this.sourceCamera.fps;
           const stream = canvas.captureStream(fps);
           let options = {};
           if (MediaRecorder.isTypeSupported('video/mp4')) {
