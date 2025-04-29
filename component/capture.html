@@ -583,14 +583,15 @@
           this.sneakCamCanvas = canvas;
           this.sneakCamCtx = ctx;
 
-          const stream = canvas.captureStream(30);
+          const fps = this.sourceCamera.fps;
+          const stream = canvas.captureStream(fps);
           let options = {};
-          if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9')) {
+          if (MediaRecorder.isTypeSupported('video/mp4')) {
+            options = {mimeType: 'video/mp4'};
+          } else if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9')) {
             options = {mimeType: 'video/webm; codecs=vp9'};
           } else if (MediaRecorder.isTypeSupported('video/webm')) {
             options = {mimeType: 'video/webm'};
-          } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-            options = {mimeType: 'video/mp4'};
           } else {
             console.error("no suitable mimetype found for this device");
           }
@@ -606,7 +607,6 @@
           this.recorder.resume();
         }
 
-        const fps = this.sourceCamera.fps;
         const interval = 1000 / fps;
 
         const draw = () => {
